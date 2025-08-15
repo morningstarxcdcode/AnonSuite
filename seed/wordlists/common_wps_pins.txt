@@ -1,0 +1,51 @@
+# Common WPS PINs for authorized testing
+# Default and commonly used WPS PINs
+
+# Default PINs
+12345670
+00000000
+11111111
+22222222
+33333333
+44444444
+55555555
+66666666
+77777777
+88888888
+99999999
+
+# Common patterns
+01234567
+87654321
+11223344
+12344321
+12121212
+21212121
+
+# Router manufacturer defaults
+# (These are examples - actual defaults vary)
+12345678
+87654321
+24681357
+13579246
+
+# Sequential patterns
+01010101
+10101010
+12341234
+43214321
+
+# Date-based patterns (MMDDYYYY format examples)
+01011970
+12251980
+07041776
+01012000
+
+# Phone number patterns (area codes)
+2125551234
+3105551234
+4155551234
+7135551234
+
+# Note: This list is for educational and authorized testing only
+# Always obtain explicit permission before testing any network

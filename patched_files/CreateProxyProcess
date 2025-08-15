@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+# -------------------------------------------------------------------
+# CreateProxyProcess
+# -------------------------------------------------------------------
+
+_multitor_directory="/Users/morningstar/Desktop/AnonSuite/src/anonymity/multitor"
+_log_file="${_multitor_directory}/multitor.log"
+PRIVOXY_BIN="/opt/homebrew/sbin/privoxy"
+HAPROXY_BIN="/opt/homebrew/bin/haproxy"
+PIDOF_BIN="/opt/homebrew/bin/pidof"
+
+# Logging function
+_logger() {
+    local level="$1"
+    local message="$2"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') [$level] $message" >> "$_log_file"
+}
+
+CreateProxyProcess() {
+    local _FUNCTION_ID="CreateProxyProcess"
+    local _STATE=0
+
+    local _user_name="$1"
+    local _proxy_bin="$2"
+    local _proxy_type="$3"
+
+    _logger "info" "${_FUNCTION_ID}() Starting ${_proxy_type} process for user=${_user_name} using ${_proxy_bin}"
+
+    # Check if process already running
+    if "$PIDOF_BIN" "$(basename "$_proxy_bin")" >/dev/null 2>&1; then
+        _logger "warn" "${_FUNCTION_ID}() ${_proxy_type} is already running"
+        return 0
+    fi
+
+    # Start proxy
+    if [[ "$_proxy_type" == "privoxy" ]]; then
+        sudo -u "${_user_name}" "$_proxy_bin" --no-daemon /opt/homebrew/etc/privoxy/config >>"$_log_file" 2>&1 &
+    elif [[ "$_proxy_type" == "haproxy" ]]; then
+        sudo -u "${_user_name}" "$_proxy_bin" -f /opt/homebrew/etc/haproxy.cfg >>"$_log_file" 2>&1 &
+    else
+        _logger "error" "${_FUNCTION_ID}() Unknown proxy type: ${_proxy_type}"
+        return 1
+    fi
+
+    if [[ $? -eq 0 ]]; then
+        _logger "info" "${_FUNCTION_ID}() ${_proxy_type} started successfully"
+        return 0
+    else
+        _logger "error" "${_FUNCTION_ID}() Failed to start ${_proxy_type}"
+        return 1
+    fi
+}

@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+# multitor - multi-Tor process launcher with logging and proxy support
+
+_multitor_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_log_stdout="${_multitor_directory}/multitor.log"
+
+# Absolute paths for executables
+_TOR_PATH="/opt/homebrew/bin/tor"
+_PRIV_PATH="/opt/homebrew/sbin/privoxy"
+_HAPROXY_PATH="/opt/homebrew/bin/haproxy"
+_PIDOF_PATH="/opt/homebrew/bin/pidof"
+
+# Logger function
+_logger() {
+    local level="$1"
+    local context="$2"
+    local msg="$3"
+    local ts
+    ts=$(date "+%Y-%m-%d %H:%M:%S")
+    echo "${ts} [${level}] ${context} ${msg}" | tee -a "$_log_stdout"
+}
+
+# Import helper functions
+source "${_multitor_directory}/CreateTorProcess"
+source "${_multitor_directory}/CreateProxyProcess"
+
+# Global variables to store parsed arguments
+_GLOBAL_USER=""
+_GLOBAL_SOCKS_PORT=""
+_GLOBAL_CONTROL_PORT=""
+_GLOBAL_PROXY=""
+_GLOBAL_HAPROXY_FLAG=""
+
+# Argument parsing logic (outside main function)
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --user)
+            _GLOBAL_USER="$2"; shift 2;;
+        --socks-port)
+            _GLOBAL_SOCKS_PORT="$2"; shift 2;;
+        --control-port)
+            _GLOBAL_CONTROL_PORT="$2"; shift 2;;
+        --proxy)
+            _GLOBAL_PROXY="$2"; shift 2;;
+        --haproxy)
+            _GLOBAL_HAPROXY_FLAG="yes"; shift;;
+        *)
+            _logger "warn" "main()" "Unknown argument: $1"; shift;;
+    esac
+done
+
+function main() {
+    # Use global parsed variables
+    local user="${_GLOBAL_USER}"
+    local socks_port="${_GLOBAL_SOCKS_PORT}"
+    local control_port="${_GLOBAL_CONTROL_PORT}"
+    local proxy="${_GLOBAL_PROXY}"
+    local haproxy_flag="${_GLOBAL_HAPROXY_FLAG}"
+
+    # Validate required arguments
+    if [[ -z "$user" || -z "$socks_port" || -z "$control_port" ]]; then
+        _logger "error" "main()" "Missing required arguments --user, --socks-port, or --control-port"
+        exit 1
+    fi
+
+    _logger "info" "main()" "Starting multitor for user=${user} on SOCKS port=${socks_port}"
+
+    # Start Tor
+    CreateTorProcess "$user" "$socks_port" "$control_port"
+
+    # Start Proxy if specified
+    if [[ -n "$proxy" ]]; then
+        if [[ "$proxy" == "privoxy" ]]; then
+            CreateProxyProcess "$user" "$_PRIV_PATH" "privoxy"
+        elif [[ "$proxy" == "haproxy" ]]; then
+            CreateProxyProcess "$user" "$_HAPROXY_PATH" "haproxy"
+        else
+            _logger "error" "main()" "Unsupported proxy type: $proxy"
+        fi
+    fi
+
+    _logger "info" "main()" "multitor startup completed"
+}
+
+# Call main function
+main

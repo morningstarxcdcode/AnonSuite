@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# multitor initialization
+
+_multitor_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_log_stdout="${_multitor_directory}/multitor.log"
+
+export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
+
+_logger() {
+    local level="$1"; shift
+    echo "$(date +'%Y-%m-%d %H:%M:%S') [$level] $*" | tee -a "$_log_stdout"
+}

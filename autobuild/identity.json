@@ -1,0 +1,48 @@
+{
+  "project_identity": {
+    "name": "AnonSuite",
+    "tagline": "Unified Security Toolkit for Privacy Professionals",
+    "concept": "Professional-grade anonymization and WiFi auditing in a single, elegant CLI interface",
+    "value_proposition": "First toolkit to seamlessly integrate network anonymization with WiFi security testing",
+    "target_audience": "Security researchers, penetration testers, privacy advocates, and cybersecurity professionals"
+  },
+  "aesthetic_theme": {
+    "primary_colors": {
+      "terminal_green": "#00ff41",
+      "matrix_green": "#008f11", 
+      "dark_bg": "#0d1117",
+      "accent_blue": "#1f6feb",
+      "warning_amber": "#fb8500"
+    },
+    "typography": {
+      "primary_font": "monospace",
+      "header_style": "ASCII art with clean lines",
+      "emphasis": "ANSI color codes for terminal compatibility"
+    },
+    "visual_language": {
+      "style": "Cyberpunk minimalism meets professional CLI tools",
+      "patterns": "Clean geometric ASCII art, structured menus, progress indicators",
+      "personality": "Confident, precise, security-focused, professional"
+    }
+  },
+  "signature_interactions": {
+    "startup_sequence": "Animated ASCII logo with system checks",
+    "menu_navigation": "Keyboard-driven with visual feedback",
+    "status_indicators": "Real-time colored status bars and symbols",
+    "error_handling": "Graceful degradation with helpful recovery suggestions",
+    "shutdown_sequence": "Secure cleanup with confirmation prompts"
+  },
+  "brand_voice": {
+    "tone": "Professional, confident, security-conscious",
+    "style": "Direct, technical, no-nonsense",
+    "personality_traits": ["Reliable", "Precise", "Trustworthy", "Expert"],
+    "avoid": ["Marketing speak", "Overly casual language", "Unnecessary complexity"]
+  },
+  "unique_selling_points": [
+    "Only toolkit combining Tor anonymization with WiFi auditing",
+    "Professional software engineering practices applied to security tools",
+    "Modular architecture allowing independent component use",
+    "Comprehensive audit logging and security controls",
+    "Production-ready with Docker, CI/CD, and comprehensive testing"
+  ]
+}

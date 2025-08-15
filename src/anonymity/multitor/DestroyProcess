@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+# shellcheck shell=bash
+
+function DestroyProcess() {
+
+  local _FUNCTION_ID="DestroyProcess"
+  local _STATE="0"
+
+  local _pid="$1"
+
+  _logger "info" \
+    "${_FUNCTION_ID}()" \
+    "Attempting to destroy process with PID: ${_pid}"
+
+  if ps -p "${_pid}" > /dev/null; then
+    kill -TERM "${_pid}" >>"$_log_stdout" 2>&1
+    _STATE="$?"
+    if [[ "$_STATE" -eq 0 ]]; then
+      _logger "info" \
+        "${_FUNCTION_ID}()" \
+        "Process ${_pid} terminated successfully."
+    else
+      _logger "error" \
+        "${_FUNCTION_ID}()" \
+        "Failed to terminate process ${_pid}."
+    fi
+  else
+    _logger "warn" "${_FUNCTION_ID}()" "Process ${_pid} not found or already terminated."
+  fi
+
+  return "$_STATE"
+}

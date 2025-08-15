@@ -1,0 +1,53 @@
+# AnonSuite Development Dependencies
+# Additional packages needed for development, testing, and CI/CD
+
+# Include production requirements
+-r requirements.txt
+
+# Testing frameworks and utilities
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-mock>=3.8.0
+pytest-asyncio>=0.21.0
+pytest-benchmark>=4.0.0
+coverage>=7.0.0
+
+# Code quality and linting
+ruff>=0.1.0
+mypy>=1.0.0
+black>=23.0.0
+isort>=5.12.0
+flake8>=6.0.0
+
+# Security scanning
+bandit>=1.7.0
+safety>=2.0.0
+semgrep>=1.0.0
+
+# Documentation generation
+mkdocs>=1.4.0
+mkdocs-material>=8.0.0
+mkdocstrings>=0.20.0
+sphinx>=5.0.0
+
+# Build and packaging
+build>=0.10.0
+twine>=4.0.0
+wheel>=0.40.0
+
+# Pre-commit hooks
+pre-commit>=3.0.0
+
+# Development utilities
+ipython>=8.0.0
+jupyter>=1.0.0
+notebook>=6.5.0
+
+# Performance profiling
+py-spy>=0.3.0
+memory-profiler>=0.60.0
+
+# Network testing (optional)
+# scapy>=2.4.5
+# netfilterqueue>=0.8.1
+# PyQt5>=5.15.0  # For WiFiPumpkin3 GUI components

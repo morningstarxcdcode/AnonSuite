@@ -1,0 +1,155 @@
+{
+  "mac_vendors": {
+    "description": "Common MAC address prefixes for network device identification",
+    "note": "Useful for identifying device manufacturers during network reconnaissance",
+    "last_updated": "2025-01-12",
+    "vendors": {
+      "00:1A:2B": {
+        "vendor": "Cisco Systems",
+        "device_types": ["Enterprise Access Points", "Switches", "Routers"],
+        "common_models": ["Aironet 1200", "Catalyst 2960", "ISR 4000"],
+        "security_notes": "Often has default SNMP community strings"
+      },
+      "00:0C:29": {
+        "vendor": "VMware",
+        "device_types": ["Virtual Machines", "Virtual NICs"],
+        "common_models": ["VMware Workstation", "ESXi VMs"],
+        "security_notes": "Virtual environment - check for VM escape vulnerabilities"
+      },
+      "00:50:56": {
+        "vendor": "VMware",
+        "device_types": ["VMware ESX/ESXi", "Virtual Machines"],
+        "common_models": ["vSphere", "ESXi"],
+        "security_notes": "Production virtualization environment"
+      },
+      "00:1B:21": {
+        "vendor": "Intel Corporate",
+        "device_types": ["Wireless Cards", "Ethernet Controllers"],
+        "common_models": ["Intel WiFi 6 AX200", "I219-V"],
+        "security_notes": "Common in business laptops"
+      },
+      "00:E0:4C": {
+        "vendor": "Realtek",
+        "device_types": ["Network Cards", "WiFi Adapters"],
+        "common_models": ["RTL8111", "RTL8821CE"],
+        "security_notes": "Consumer-grade hardware, check for driver vulnerabilities"
+      },
+      "00:26:B9": {
+        "vendor": "Netgear",
+        "device_types": ["Home Routers", "WiFi Access Points"],
+        "common_models": ["R6000", "Nighthawk", "Orbi"],
+        "security_notes": "Check for default admin credentials (admin/password)"
+      },
+      "B8:27:EB": {
+        "vendor": "Raspberry Pi Foundation",
+        "device_types": ["Raspberry Pi", "IoT Devices"],
+        "common_models": ["Pi 3", "Pi 4", "Pi Zero"],
+        "security_notes": "Often used for DIY projects, may have weak security"
+      },
+      "00:16:B6": {
+        "vendor": "Linksys",
+        "device_types": ["Home Routers", "WiFi Routers"],
+        "common_models": ["WRT54G", "EA6350", "Velop"],
+        "security_notes": "Legacy models may have known vulnerabilities"
+      },
+      "00:1F:3F": {
+        "vendor": "Apple",
+        "device_types": ["MacBooks", "iMacs", "Airport"],
+        "common_models": ["MacBook Pro", "Airport Extreme"],
+        "security_notes": "Generally well-secured, but check for outdated firmware"
+      },
+      "00:23:6C": {
+        "vendor": "Apple",
+        "device_types": ["iPhone", "iPad", "Apple TV"],
+        "common_models": ["iPhone 12", "iPad Pro"],
+        "security_notes": "Mobile devices - check for jailbreak/root"
+      },
+      "00:1D:D8": {
+        "vendor": "Ubiquiti Networks",
+        "device_types": ["Enterprise WiFi", "UniFi Access Points"],
+        "common_models": ["UniFi AP AC Pro", "Dream Machine"],
+        "security_notes": "Professional equipment, usually well-configured"
+      },
+      "00:15:6D": {
+        "vendor": "Aruba Networks",
+        "device_types": ["Enterprise Access Points", "Controllers"],
+        "common_models": ["AP-205", "7030 Controller"],
+        "security_notes": "Enterprise-grade security, check for proper segmentation"
+      },
+      "00:24:A5": {
+        "vendor": "Buffalo Technology",
+        "device_types": ["WiFi Routers", "Network Storage"],
+        "common_models": ["AirStation", "TeraStation"],
+        "security_notes": "May have default credentials or weak encryption"
+      },
+      "00:1E:58": {
+        "vendor": "D-Link",
+        "device_types": ["Home Routers", "Switches"],
+        "common_models": ["DIR-615", "DGS-1008A"],
+        "security_notes": "Consumer equipment, often has security issues"
+      },
+      "00:C0:CA": {
+        "vendor": "ALFA Network",
+        "device_types": ["USB WiFi Adapters", "High-power WiFi"],
+        "common_models": ["AWUS036ACS", "AWUS036NHA"],
+        "security_notes": "Popular for penetration testing - may indicate security testing"
+      },
+      "00:11:95": {
+        "vendor": "Panda Wireless",
+        "device_types": ["USB WiFi Adapters"],
+        "common_models": ["PAU09", "PAU06"],
+        "security_notes": "Common in security testing setups"
+      },
+      "00:90:4C": {
+        "vendor": "HTC Corporation",
+        "device_types": ["Smartphones", "Tablets"],
+        "common_models": ["HTC One", "Desire"],
+        "security_notes": "Android devices - check for root access"
+      },
+      "28:C6:8E": {
+        "vendor": "Samsung Electronics",
+        "device_types": ["Smartphones", "Smart TVs", "Tablets"],
+        "common_models": ["Galaxy S21", "Smart TV"],
+        "security_notes": "Check for Knox security on business devices"
+      },
+      "00:1A:92": {
+        "vendor": "ASUSTek Computer",
+        "device_types": ["Routers", "Motherboards", "WiFi Cards"],
+        "common_models": ["RT-AC68U", "ROG Strix"],
+        "security_notes": "Gaming/enthusiast equipment, may have custom firmware"
+      },
+      "00:07:32": {
+        "vendor": "Cisco-Linksys",
+        "device_types": ["Legacy Routers", "Switches"],
+        "common_models": ["WRT54G", "BEFSR41"],
+        "security_notes": "Very old equipment, likely vulnerable"
+      }
+    },
+    "identification_tips": {
+      "enterprise_indicators": [
+        "Cisco", "Aruba", "Ubiquiti", "Ruckus", "Meraki"
+      ],
+      "consumer_indicators": [
+        "Netgear", "Linksys", "D-Link", "TP-Link", "Buffalo"
+      ],
+      "security_testing_indicators": [
+        "ALFA Network", "Panda Wireless", "Realtek USB adapters"
+      ],
+      "iot_indicators": [
+        "Raspberry Pi", "Arduino", "Espressif"
+      ]
+    },
+    "common_vulnerabilities": {
+      "default_credentials": [
+        "admin/admin", "admin/password", "admin/(blank)", 
+        "root/root", "ubnt/ubnt", "cisco/cisco"
+      ],
+      "weak_encryption": [
+        "WEP", "WPS enabled", "Open networks", "WPA with weak PSK"
+      ],
+      "firmware_issues": [
+        "Outdated firmware", "Known CVEs", "Default configurations"
+      ]
+    }
+  }
+}

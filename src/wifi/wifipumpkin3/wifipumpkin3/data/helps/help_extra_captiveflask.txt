@@ -1,0 +1,6 @@
+
+Plugins Installation
+====================
+
+You will need to restart the wp3
+to complete the installation.

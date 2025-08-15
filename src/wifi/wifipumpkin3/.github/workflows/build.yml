@@ -1,0 +1,35 @@
+name: Build
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - tmp-*
+    tags:
+      - v*
+  pull_request:
+
+jobs:
+  wifipumpkin3:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.8]
+        os: [ubuntu-latest]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install
+      run: |
+            python3 -m pip install PyQt5==5.14
+            python3 -c "from PyQt5.QtCore import QSettings; print('done')"
+            make install
+    - name: Test
+      run: make test
+    - name: Run
+      run: wifipumpkin3 -h

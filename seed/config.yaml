@@ -1,0 +1,113 @@
+# AnonSuite Sample Configuration
+# Copy to ~/.anonsuite/config.yaml or /etc/anonsuite/config.yaml
+
+# Anonymity Module Configuration
+anonymity:
+  # Number of Tor instances to run (1-10)
+  tor_instances: 3
+  
+  # Load balancer type: haproxy, polipo, privoxy
+  load_balancer: haproxy
+  
+  # Preferred exit node countries (ISO 2-letter codes)
+  exit_nodes:
+    - "us"  # United States
+    - "de"  # Germany
+    - "nl"  # Netherlands
+    - "ch"  # Switzerland
+  
+  # Tor configuration
+  tor:
+    control_port: 9051
+    socks_port_start: 9052
+    circuit_timeout: 30
+    new_circuit_period: 600
+  
+  # Proxy configuration
+  proxy:
+    http_port: 8118
+    socks_port: 9050
+    listen_address: "127.0.0.1"
+
+# WiFi Auditing Module Configuration  
+wifi:
+  # Default wireless interface
+  interface: "wlan0"
+  
+  # Monitor mode interface (created automatically)
+  monitor_interface: "wlan0mon"
+  
+  # Attack modes to enable
+  attack_modes:
+    - "rogue_ap"
+    - "pixie_dust"
+    - "network_scan"
+  
+  # Capture file settings
+  capture:
+    path: "/tmp/anonsuite/captures"
+    format: "pcap"
+    max_size_mb: 100
+    auto_rotate: true
+  
+  # Rogue AP settings
+  rogue_ap:
+    ssid: "FreeWiFi"
+    channel: 6
+    encryption: "open"  # open, wep, wpa, wpa2
+    
+  # WPS attack settings
+  wps:
+    timeout: 300
+    delay: 1
+    pixie_dust: true
+
+# System Configuration
+system:
+  # Logging configuration
+  logging:
+    level: "info"  # debug, info, warn, error, critical
+    output: "both"  # file, console, both
+    rotation: "daily"  # daily, weekly, size
+    max_files: 7
+    max_size_mb: 10
+  
+  # Temporary files
+  temp:
+    path: "/tmp/anonsuite"
+    cleanup_on_exit: true
+    max_age_hours: 24
+  
+  # Security settings
+  security:
+    require_sudo: true
+    audit_commands: true
+    sanitize_logs: true
+    
+# Network Configuration
+network:
+  # DNS settings
+  dns:
+    servers:
+      - "1.1.1.1"
+      - "8.8.8.8"
+    leak_protection: true
+  
+  # Interface management
+  interfaces:
+    backup_config: true
+    restore_on_exit: true
+    
+# Advanced Settings (modify with caution)
+advanced:
+  # Performance tuning
+  performance:
+    max_concurrent_operations: 5
+    timeout_seconds: 30
+    retry_attempts: 3
+  
+  # Debug options
+  debug:
+    verbose_output: false
+    save_debug_logs: false
+    profile_performance: false

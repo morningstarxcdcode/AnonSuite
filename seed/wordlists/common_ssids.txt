@@ -1,0 +1,65 @@
+# Common SSID names for WiFi auditing
+# Use for testing authorized networks only
+
+# Default router SSIDs
+NETGEAR
+Linksys
+D-Link
+TP-Link
+ASUS
+Belkin
+Buffalo
+
+# Common home network names
+Home
+MyWiFi
+Wireless
+Network
+Internet
+WiFi
+Home_Network
+Guest
+Office
+
+# Provider defaults
+ATT
+Verizon
+Comcast
+Spectrum
+CenturyLink
+Optimum
+Cox
+
+# Generic names
+default
+admin
+router
+modem
+gateway
+access_point
+
+# Business networks
+Corporate
+Company
+Office_WiFi
+Staff
+Employee
+Guest_Network
+Conference
+Meeting_Room
+
+# Mobile hotspots
+iPhone
+Android
+Samsung
+Pixel
+OnePlus
+Huawei
+
+# Coffee shops and public
+Starbucks
+McDonalds
+Free_WiFi
+Public
+Guest_Access
+Hotel_WiFi

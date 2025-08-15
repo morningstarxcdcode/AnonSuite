@@ -1,0 +1,194 @@
+# AnonSuite .gitignore
+# Comprehensive ignore file for security toolkit
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# IDE and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Logs and runtime data
+*.log
+log/
+logs/
+run/
+*.pid
+*.seed
+*.pid.lock
+
+# Configuration and sensitive data
+config/anonsuite.conf
+config/profiles/*.json
+.env
+.env.local
+.env.production
+*.key
+*.pem
+*.crt
+*.p12
+
+# Tor and anonymity data
+src/anonymity/multitor/tor_*/
+*.torrc
+torrc.*
+
+# WiFi scan results and sensitive data
+run/wifi_scans/
+run/pixiewps_results/
+run/wifipumpkin_results/
+*.pcap
+*.cap
+
+# Temporary files
+tmp/
+temp/
+/tmp/anonsuite/
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Security scan results
+bandit-report.*
+safety-report.*
+security-audit.*
+
+# Test coverage
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# Documentation builds
+docs/_build/
+docs/build/
+site/
+
+# Package builds
+*.tar.gz
+*.zip
+*.deb
+*.rpm
+
+# Local development
+local/
+scratch/
+notes.txt
+TODO.local
+.local/
+
+# Plugin development
+plugins/local_*
+plugins/dev_*
+plugins/test_*
+
+# Network captures and sensitive output
+*.pcapng
+network_*.json
+scan_results_*
+assessment_*
+
+# Compiled binaries
+src/wifi/pixiewps/pixiewps
+src/wifi/*/bin/
+*.exe
+*.dll
+
+# macOS specific
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Linux specific
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# Windows specific
+*.lnk
+desktop.ini
+$RECYCLE.BIN/
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Project specific ignores
+architect-state.json.bak
+build-log/*.backup
+USER_TESTING_*.md.bak
+FEEDBACK_*.md.old

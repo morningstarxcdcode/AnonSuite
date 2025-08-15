@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+# shellcheck shell=bash
+
+# Example helpers file with all _logger calls in single-line format
+
+function _logger() {
+  local level="$1"
+  local function_id="$2"
+  local message="$3"
+  echo "[$level] $function_id $message"
+}
+
+function _init_cmd() {
+  local _cmd="$1"
+  local _FUNCTION_ID="_init_cmd"
+  local _STATE=0
+
+  _logger "info" "${_FUNCTION_ID}()" "init: $_cmd"
+  eval "$_cmd" >>"$_log_stdout" 2>&1
+  _STATE=$?
+
+  if [[ $_STATE -ne 0 ]]; then
+    _logger "stop" "${_FUNCTION_ID}()" "result: fail"
+  else
+    _logger "info" "${_FUNCTION_ID}()" "result: success"
+  fi
+
+  return $_STATE
+}
+
+function _create_multitor_dir() {
+  local dir_path="$1"
+  local _FUNCTION_ID="_create_multitor_dir"
+  local _STATE=0
+
+  _logger "info" "${_FUNCTION_ID}()" "creating a multitor directory: $dir_path"
+  mkdir -p "$dir_path" >>"$_log_stdout" 2>&1
+  _STATE=$?
+
+  if [[ $_STATE -ne 0 ]]; then
+    _logger "stop" "${_FUNCTION_ID}()" "failed to create multitor directory"
+    return $_STATE
+  fi
+
+  chown -R "$_user_name" "$dir_path" >>"$_log_stdout" 2>&1
+  _STATE=$?
+
+  if [[ $_STATE -ne 0 ]]; then
+    _logger "warn" "${_FUNCTION_ID}()" "could not change owner of $dir_path to $_user_name"
+  else
+    _logger "info" "${_FUNCTION_ID}()" "changed owner of $dir_path to $_user_name"
+  fi
+
+  return $_STATE
+}
+
+# Additional helper functions go here...
+

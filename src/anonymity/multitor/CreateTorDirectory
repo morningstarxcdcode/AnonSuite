@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+# shellcheck shell=bash
+
+function CreateTorDirectory() {
+
+  local _FUNCTION_ID="CreateTorDirectory"
+  local _STATE="0"
+
+  local _dir_path="$1"
+  local _user_name="$2" # Assuming user_name is passed or available globally
+
+  _logger "info" "${_FUNCTION_ID}()" "Creating Tor directory: ${_dir_path}"
+
+  if [[ ! -d "${_dir_path}" ]]; then
+    mkdir -p "${_dir_path}" >>"$_log_stdout" 2>&1
+    _kstate=$?
+    if [[ $_kstate -eq 0 ]]; then
+      _logger "info" "${_FUNCTION_ID}()" "Created directory: ${_dir_path}"
+      if [[ -n "${_user_name}" ]]; then
+        chown -R "${_user_name}" "${_dir_path}" >>"$_log_stdout" 2>&1
+        _kstate=$?
+        if [[ $_kstate -eq 0 ]]; then
+          _logger "info" "${_FUNCTION_ID}()" "Changed owner of ${_dir_path} to ${_user_name}"
+        else
+          _logger "warn" "${_FUNCTION_ID}()" "Could not change owner of ${_dir_path} to ${_user_name}"
+        fi
+      fi
+    else
+      _logger "error" "${_FUNCTION_ID}()" "Failed to create directory: ${_dir_path}"
+      _STATE="1"
+    fi
+  else
+    _logger "info" "${_FUNCTION_ID}()" "Directory already exists: ${_dir_path}"
+  fi
+
+  return "$_STATE"
+}

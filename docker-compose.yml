@@ -1,0 +1,151 @@
+version: '3.8'
+
+services:
+  anonsuite:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: anonsuite-app
+    hostname: anonsuite
+    restart: unless-stopped
+    
+    # Security settings
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    
+    # Network settings
+    ports:
+      - "9000:9000"  # Tor SOCKS proxy
+      - "9001:9001"  # Tor control port
+      - "8119:8119"  # Privoxy HTTP proxy
+    
+    # Volume mounts
+    volumes:
+      - ./config:/app/config
+      - ./run:/app/run
+      - ./log:/app/log
+      - ./plugins:/app/plugins
+      - anonsuite-tmp:/tmp/anonsuite
+    
+    # Environment variables
+    environment:
+      - ANONSUITE_CONFIG_DIR=/app/config
+      - ANONSUITE_DATA_DIR=/app/run
+      - ANONSUITE_LOG_DIR=/app/log
+      - PYTHONPATH=/app/src
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.5'
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "python", "src/anonsuite.py", "--health-check"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  anonsuite-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: anonsuite-dev
+    hostname: anonsuite-dev
+    
+    # Development settings
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+      - "8119:8119"
+      - "8080:8080"  # Additional port for development
+    
+    volumes:
+      - .:/app
+      - anonsuite-dev-tmp:/tmp/anonsuite
+    
+    environment:
+      - ANONSUITE_CONFIG_DIR=/app/config
+      - ANONSUITE_DATA_DIR=/app/run
+      - ANONSUITE_LOG_DIR=/app/log
+      - PYTHONPATH=/app/src
+      - ANONSUITE_DEBUG=1
+    
+    # Override command for development
+    command: ["python", "src/anonsuite.py", "--demo"]
+    
+    # Keep container running for development
+    tty: true
+    stdin_open: true
+
+  # Tor service (standalone)
+  tor:
+    image: dperson/torproxy:latest
+    container_name: anonsuite-tor
+    restart: unless-stopped
+    
+    ports:
+      - "9050:9050"  # Tor SOCKS proxy (alternative)
+    
+    environment:
+      - TOR_NewCircuitPeriod=30
+      - TOR_MaxCircuitDirtiness=600
+    
+    volumes:
+      - tor-data:/var/lib/tor
+    
+    # Security settings
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  # Privoxy service (standalone)
+  privoxy:
+    image: vimagick/privoxy:latest
+    container_name: anonsuite-privoxy
+    restart: unless-stopped
+    
+    ports:
+      - "8118:8118"  # Privoxy HTTP proxy (alternative)
+    
+    volumes:
+      - ./config/privoxy:/etc/privoxy:ro
+    
+    depends_on:
+      - tor
+    
+    # Security settings
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+volumes:
+  anonsuite-tmp:
+    driver: local
+  anonsuite-dev-tmp:
+    driver: local
+  tor-data:
+    driver: local
+
+networks:
+  default:
+    name: anonsuite-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

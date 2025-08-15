@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  anonsuite:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    container_name: anonsuite-dev
+    privileged: true
+    network_mode: host
+    volumes:
+      - ../src:/app/src:ro
+      - ../config:/app/config:ro
+      - anonsuite-logs:/var/log/anonsuite
+      - anonsuite-tmp:/tmp/anonsuite
+    environment:
+      - ANONSUITE_ENV=development
+      - ANONSUITE_LOG_LEVEL=debug
+    command: ["python3", "/app/src/anonsuite.py"]
+    restart: unless-stopped
+
+  tor-proxy:
+    image: dperson/torproxy:latest
+    container_name: anonsuite-tor
+    ports:
+      - "8118:8118"  # Privoxy
+      - "9050:9050"  # Tor SOCKS
+    environment:
+      - TOR_NewCircuitPeriod=30
+      - TOR_MaxCircuitDirtiness=600
+    restart: unless-stopped
+
+volumes:
+  anonsuite-logs:
+    driver: local
+  anonsuite-tmp:
+    driver: local
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

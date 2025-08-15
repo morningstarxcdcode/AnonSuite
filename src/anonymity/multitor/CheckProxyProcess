@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+# shellcheck shell=bash
+
+function CheckProxyProcess() {
+
+  local _FUNCTION_ID="CheckProxyProcess"
+  local _STATE="0"
+
+  local _process_name="$1"
+  local _pids=()
+
+  _logger "info" \
+    "${_FUNCTION_ID}()" \
+    "Checking for running processes: ${_process_name}"
+
+  # Find PIDs of the process
+  IFS=$'\n' read -r -d '' -a _pids < <(pgrep "${_process_name}" && printf '\0')
+
+  if [[ ${#_pids[@]} -ne 0 ]]; then
+    _logger "info" \
+      "${_FUNCTION_ID}()" \
+      "Found running ${_process_name} processes: ${_pids[*]}"
+    _proxy_processes_list+=("${_pids[@]}") # Add to global list
+  else
+    _logger "info" \
+      "${_FUNCTION_ID}()" \
+      "No running ${_process_name} processes found."
+  fi
+
+  return "$_STATE"
+}

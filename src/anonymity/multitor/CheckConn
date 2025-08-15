@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+# shellcheck shell=bash
+
+function CheckConn() {
+
+  local _FUNCTION_ID="CheckConn"
+  local _STATE="0"
+
+  local _host="$1"
+  local _port="$2"
+
+  _logger "info" \
+    "${_FUNCTION_ID}()" \
+    "Checking connection to ${_host}:${_port}"
+
+  nc -z -w 5 "${_host}" "${_port}" >>"$_log_stdout" 2>&1
+  _STATE="$?"
+
+  if [[ "$_STATE" -eq 0 ]]; then
+    _logger "info" \
+      "${_FUNCTION_ID}()" \
+      "Connection to ${_host}:${_port} successful."
+  else
+    _logger "warn" "${_FUNCTION_ID}()" "Connection to ${_host}:${_port} failed."
+  fi
+
+  return "$_STATE"
+}

@@ -1,0 +1,180 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "anonsuite"
+version = "2.0.0"
+description = "Unified Security Toolkit for Privacy Professionals"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Marcus", email = "security@anonsuite.dev"},
+    {name = "morningstarxcdcode", email = "contact@morningstarxcdcode.dev"}
+]
+maintainers = [
+    {name = "Marcus", email = "security@anonsuite.dev"}
+]
+keywords = [
+    "security", "anonymity", "tor", "wifi", "penetration-testing", 
+    "privacy", "networking", "cybersecurity", "ethical-hacking"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: System :: Networking",
+    "Topic :: Utilities"
+]
+requires-python = ">=3.8"
+dependencies = [
+    "click>=8.0.0",
+    "colorama>=0.4.4",
+    "requests>=2.28.0",
+    "urllib3>=1.26.0",
+    "cryptography>=3.4.8",
+    "pyyaml>=6.0",
+    "toml>=0.10.2",
+    "psutil>=5.8.0"
+]
+
+[project.optional-dependencies]
+wifi = [
+    "scapy>=2.4.5",
+    "netfilterqueue>=0.8.1"
+]
+gui = [
+    "PyQt5>=5.15.0"
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-mock>=3.8.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+    "bandit>=1.7.0",
+    "safety>=2.0.0",
+    "pre-commit>=3.0.0"
+]
+docs = [
+    "mkdocs>=1.4.0",
+    "mkdocs-material>=8.0.0",
+    "mkdocstrings>=0.20.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/morningstarxcdcode/AnonSuite"
+Documentation = "https://github.com/morningstarxcdcode/AnonSuite/docs"
+Repository = "https://github.com/morningstarxcdcode/AnonSuite.git"
+Issues = "https://github.com/morningstarxcdcode/AnonSuite/issues"
+Discussions = "https://github.com/morningstarxcdcode/AnonSuite/discussions"
+
+[project.scripts]
+anonsuite = "anonsuite:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+anonsuite = ["*.json", "*.yaml", "*.yml", "*.conf"]
+
+# Ruff configuration for linting and formatting
+[tool.ruff]
+target-version = "py38"
+line-length = 88
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501",  # line too long, handled by formatter
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/**/*" = ["B011", "F401", "F811"]
+
+# MyPy configuration for type checking
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "scapy.*",
+    "netfilterqueue.*",
+    "PyQt5.*"
+]
+ignore_missing_imports = true
+
+# Pytest configuration
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers --strict-config"
+testpaths = ["tests"]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests", 
+    "security: Security tests",
+    "slow: Slow running tests",
+    "network: Tests requiring network access",
+    "root: Tests requiring root privileges"
+]
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/conftest.py"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:"
+]
+
+# Bandit security configuration
+[tool.bandit]
+exclude_dirs = ["tests", "build", "dist"]
+skips = ["B101", "B601"]

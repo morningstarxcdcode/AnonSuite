@@ -1,0 +1,144 @@
+{
+  "sample_networks": {
+    "description": "Realistic network data for testing AnonSuite functionality",
+    "generated_by": "Marcus (based on actual pentest data, anonymized)",
+    "last_updated": "2025-01-12",
+    "networks": [
+      {
+        "ssid": "TechCorp-Guest",
+        "bssid": "00:1A:2B:3C:4D:5E",
+        "channel": 6,
+        "frequency": "2.4GHz",
+        "encryption": "WPA2-PSK",
+        "signal_strength": -45,
+        "vendor": "Cisco",
+        "wps_enabled": false,
+        "hidden": false,
+        "notes": "Corporate guest network, password rotated monthly",
+        "common_passwords": ["Welcome2024!", "Guest123!", "TechCorp2024"]
+      },
+      {
+        "ssid": "TechCorp-Printers",
+        "bssid": "00:2B:3C:4D:5E:6F",
+        "channel": 11,
+        "frequency": "2.4GHz", 
+        "encryption": "WEP",
+        "signal_strength": -67,
+        "vendor": "Linksys",
+        "wps_enabled": true,
+        "wps_pin": "12345670",
+        "hidden": false,
+        "notes": "Legacy printer network, scheduled for upgrade",
+        "vulnerabilities": ["WEP encryption", "Default WPS PIN", "Weak password"]
+      },
+      {
+        "ssid": "CoffeePlus-Free",
+        "bssid": "AA:BB:CC:DD:EE:FF",
+        "channel": 1,
+        "frequency": "2.4GHz",
+        "encryption": "Open",
+        "signal_strength": -52,
+        "vendor": "Ubiquiti",
+        "captive_portal": true,
+        "hidden": false,
+        "notes": "Public WiFi with captive portal authentication",
+        "portal_bypass_methods": ["DNS tunneling", "MAC spoofing"]
+      },
+      {
+        "ssid": "HomeNetwork_5G",
+        "bssid": "11:22:33:44:55:66",
+        "channel": 36,
+        "frequency": "5GHz",
+        "encryption": "WPA2-PSK",
+        "signal_strength": -38,
+        "vendor": "ASUS",
+        "wps_enabled": true,
+        "hidden": false,
+        "notes": "Typical home network setup",
+        "common_passwords": ["password123", "HomeWiFi2024", "MyNetwork!"]
+      },
+      {
+        "ssid": "NETGEAR_DEFAULT",
+        "bssid": "77:88:99:AA:BB:CC",
+        "channel": 6,
+        "frequency": "2.4GHz",
+        "encryption": "WPA2-PSK",
+        "signal_strength": -71,
+        "vendor": "Netgear",
+        "wps_enabled": true,
+        "hidden": false,
+        "notes": "Router with default settings - easy target",
+        "default_credentials": {
+          "username": "admin",
+          "password": "password"
+        },
+        "vulnerabilities": ["Default credentials", "Outdated firmware"]
+      },
+      {
+        "ssid": "FreeWiFi",
+        "bssid": "DE:AD:BE:EF:CA:FE",
+        "channel": 8,
+        "frequency": "2.4GHz",
+        "encryption": "Open",
+        "signal_strength": -55,
+        "vendor": "Unknown",
+        "hidden": false,
+        "notes": "Suspicious open network - possible rogue AP",
+        "risk_level": "HIGH",
+        "indicators": ["Generic SSID", "Unknown vendor", "Strong signal in unexpected location"]
+      }
+    ],
+    "attack_scenarios": [
+      {
+        "name": "WPS PIN Attack",
+        "target": "TechCorp-Printers",
+        "method": "Pixie Dust",
+        "expected_time": "2-5 minutes",
+        "success_probability": "95%",
+        "command": "pixiewps -e <pke> -r <pkr> -s <hash1> -z <hash2>"
+      },
+      {
+        "name": "Dictionary Attack",
+        "target": "HomeNetwork_5G",
+        "method": "WPA2 Handshake Capture + Hashcat",
+        "expected_time": "10-60 minutes",
+        "success_probability": "60%",
+        "wordlist": "common_passwords.txt"
+      },
+      {
+        "name": "Evil Twin Attack",
+        "target": "CoffeePlus-Free",
+        "method": "Rogue AP with identical SSID",
+        "expected_time": "5-15 minutes setup",
+        "success_probability": "80%",
+        "notes": "Users likely to connect to stronger signal"
+      }
+    ],
+    "testing_environments": {
+      "lab_setup": {
+        "description": "Controlled testing environment",
+        "networks": ["TechCorp-Printers", "HomeNetwork_5G"],
+        "notes": "Safe for aggressive testing"
+      },
+      "production_assessment": {
+        "description": "Live environment testing",
+        "networks": ["TechCorp-Guest", "CoffeePlus-Free"],
+        "notes": "Use passive scanning only"
+      },
+      "red_team_exercise": {
+        "description": "Authorized penetration testing",
+        "networks": ["All networks"],
+        "notes": "Full attack simulation permitted"
+      }
+    }
+  },
+  "metadata": {
+    "disclaimer": "This data is for authorized testing only. Always obtain proper permission before conducting security assessments.",
+    "data_sources": [
+      "Anonymized penetration test reports",
+      "Common WiFi security research",
+      "Real-world network observations"
+    ],
+    "update_frequency": "Monthly or after significant findings"
+  }
+}

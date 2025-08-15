@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+# shellcheck shell=bash
+
+function OutputGen() {
+
+  local _FUNCTION_ID="OutputGen"
+  local _STATE="0"
+
+  _logger "info" "${_FUNCTION_ID}()" "Generating output for Tor process - PID: ${_tor_proc_id}, SOCKS: ${_tor_proc_socks}, Control: ${_tor_proc_control}, Status: ${_tor_pid_status}"
+
+  printf "    \e[1;30mprocess id\e[m: \e[1;39m%s\e[m\n" "${_tor_proc_id}"
+  printf "    \e[1;30msocks_port\e[m: \e[1;39m%s\e[m\n" "${_tor_proc_socks}"
+  printf "    \e[1;30mcontrol_port\e[m: \e[1;39m%s\e[m\n" "${_tor_proc_control}"
+  printf "        \e[1;30mstatus\e[m: \e[1;32m%s\e[m\n" "${_tor_pid_status}"
+
+  return "$_STATE"
+}

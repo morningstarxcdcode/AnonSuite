@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+# shellcheck shell=bash
+
+function GetTorProcess() {
+
+  local _FUNCTION_ID="GetTorProcess"
+  local _STATE="0"
+
+  _logger "info" \
+    "${_FUNCTION_ID}()" \
+    "Getting Tor process information from: ${_tproc}"
+
+  # Parse _tproc (ps -ax output) to extract relevant information
+  # Example _tproc: "  1234 ?        Sl   0:00 tor --RunAsDaemon 1 --DataDirectory /path/to/data --SocksPort 9050 --ControlPort 9051"
+  # PID is $1
+  # SOCKS port is $13 (assuming standard output format)
+  # Control port is $15 (assuming standard output format)
+
+  # Extract PID
+  _tor_proc_id=$(echo "${_tproc}" | awk '{print $1}')
+
+  # Extract SOCKS port
+  _tor_proc_socks=$(echo "${_tproc}" | grep -oP 'SocksPort \K\d+')
+
+  # Extract Control port
+  _tor_proc_control=$(echo "${_tproc}" | grep -oP 'ControlPort \K\d+')
+
+  _logger "info" "${_FUNCTION_ID}()" "Parsed Tor process - PID: ${_tor_proc_id}, SOCKS: ${_tor_proc_socks}, Control: ${_tor_proc_control}"
+
+  return "$_STATE"
+}

@@ -1,0 +1,133 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: anonsuite
+  labels:
+    name: anonsuite
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: anonsuite-config
+  namespace: anonsuite
+data:
+  config.yaml: |
+    anonymity:
+      tor_instances: 3
+      load_balancer: haproxy
+      exit_nodes: ["us", "de", "nl"]
+    wifi:
+      interface: wlan0
+      attack_modes: ["rogue_ap", "pixie_dust"]
+      capture_path: /tmp/anonsuite/captures
+    logging:
+      level: info
+      output: both
+      rotation: daily
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: anonsuite-secrets
+  namespace: anonsuite
+type: Opaque
+data:
+  # Base64 encoded secrets (example)
+  tor_control_password: ""
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: anonsuite
+  namespace: anonsuite
+  labels:
+    app: anonsuite
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: anonsuite
+  template:
+    metadata:
+      labels:
+        app: anonsuite
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+      - name: anonsuite
+        image: anonsuite:latest
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: true
+          capabilities:
+            add:
+            - NET_ADMIN
+            - NET_RAW
+        env:
+        - name: ANONSUITE_ENV
+          value: "production"
+        - name: ANONSUITE_LOG_LEVEL
+          value: "info"
+        - name: ANONSUITE_CONFIG_PATH
+          value: "/etc/anonsuite"
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/anonsuite
+          readOnly: true
+        - name: logs-volume
+          mountPath: /var/log/anonsuite
+        - name: tmp-volume
+          mountPath: /tmp/anonsuite
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command:
+            - python3
+            - /app/src/anonsuite.py
+            - --health-check
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          exec:
+            command:
+            - python3
+            - /app/src/anonsuite.py
+            - --health-check
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      volumes:
+      - name: config-volume
+        configMap:
+          name: anonsuite-config
+      - name: logs-volume
+        emptyDir: {}
+      - name: tmp-volume
+        emptyDir: {}
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: anonsuite-service
+  namespace: anonsuite
+spec:
+  selector:
+    app: anonsuite
+  ports:
+  - name: tor-socks
+    port: 9050
+    targetPort: 9050
+  - name: privoxy
+    port: 8118
+    targetPort: 8118
+  type: ClusterIP

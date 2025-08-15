@@ -1,0 +1,102 @@
+MIT License
+
+Copyright (c) 2024 Sourav Rajak (morningstarxcdcode)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+================================================================================
+
+ADDITIONAL TERMS AND CONDITIONS:
+
+1. ETHICAL USE REQUIREMENT:
+   This software is intended for authorized security testing, research, and 
+   educational purposes only. Users must:
+   - Obtain explicit written permission before testing any systems
+   - Comply with all applicable local, state, and federal laws
+   - Use the software only on systems they own or have explicit authorization to test
+   - Not use the software for malicious, illegal, or unauthorized activities
+
+2. EDUCATIONAL PURPOSE:
+   This software is designed to help security professionals, researchers, and 
+   students learn about network security, privacy tools, and ethical hacking 
+   techniques in a controlled and legal environment.
+
+3. NO WARRANTY FOR SECURITY:
+   While this software includes security tools and features, the authors make 
+   no warranty that it will protect against all security threats or that it 
+   is suitable for any particular security purpose.
+
+4. THIRD-PARTY COMPONENTS:
+   This software integrates with and may include components from:
+   - Tor Project (https://www.torproject.org/) - 3-clause BSD License
+   - Privoxy (https://www.privoxy.org/) - GNU GPL v2
+   - multitor by trimstray (https://github.com/trimstray/multitor) - MIT License
+   - WiFiPumpkin3 by P0cL4bs (https://github.com/P0cL4bs/wifipumpkin3) - MIT License
+   - pixiewps by wiire-a (https://github.com/wiire-a/pixiewps) - GPL v3
+
+   Each component retains its original license terms. Users must comply with 
+   all applicable license requirements.
+
+5. ATTRIBUTION:
+   If you use this software in research, publications, or derivative works, 
+   please provide appropriate attribution to the original authors and project.
+
+6. DISCLAIMER OF LIABILITY:
+   The authors and contributors of this software shall not be held liable for 
+   any damages, legal issues, or consequences arising from the use or misuse 
+   of this software. Users assume full responsibility for their actions.
+
+7. COMPLIANCE:
+   Users are responsible for ensuring their use of this software complies with:
+   - Computer Fraud and Abuse Act (CFAA) in the United States
+   - Computer Misuse Act in the United Kingdom  
+   - Similar cybersecurity and computer crime laws in their jurisdiction
+   - Organizational policies and procedures
+   - Professional codes of conduct
+
+8. REPORTING SECURITY ISSUES:
+   If you discover security vulnerabilities in this software, please report 
+   them responsibly through the project's security reporting channels rather 
+   than public disclosure.
+
+By using this software, you acknowledge that you have read, understood, and 
+agree to be bound by these terms and conditions in addition to the MIT License 
+terms above.
+
+For questions about licensing or appropriate use, please contact the project 
+maintainers through the official project channels.
+
+================================================================================
+
+ACKNOWLEDGMENTS:
+
+This project builds upon the excellent work of many open-source security tools 
+and libraries. We gratefully acknowledge the contributions of:
+
+- The Tor Project for providing robust anonymity infrastructure
+- The Privoxy team for HTTP proxy and filtering capabilities  
+- trimstray for the multitor Tor management framework
+- P0cL4bs for WiFiPumpkin3 wireless security testing platform
+- wiire-a for pixiewps WPS security testing tool
+- The Python community for excellent libraries and frameworks
+- The broader cybersecurity community for knowledge sharing and collaboration
+
+This software is developed with respect for privacy, security, and ethical 
+research practices. We encourage responsible disclosure and ethical use of 
+security tools.

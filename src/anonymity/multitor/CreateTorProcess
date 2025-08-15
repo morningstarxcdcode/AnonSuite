@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+
+# -------------------------------------------------------------------
+# CreateTorProcess
+# -------------------------------------------------------------------
+
+_multitor_directory="/Users/morningstar/Desktop/AnonSuite/src/anonymity/multitor"
+_log_file="${_multitor_directory}/multitor.log"
+TOR_BIN="/opt/homebrew/bin/tor"
+
+# Logging function
+_logger() {
+    local level="$1"
+    local message="$2"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') [$level] $message" >> "$_log_file"
+}
+
+CreateTorProcess() {
+    local _FUNCTION_ID="CreateTorProcess"
+    local _STATE=0
+
+    local _user_name="$1"
+    local _socks_port_number="$2"
+    local _control_port_number="$3"
+
+    local _tor_data_dir="${_multitor_directory}/tor_${_socks_port_number}"
+    local _tor_log_file="${_tor_data_dir}/tor.log"
+
+    _logger "info" "${_FUNCTION_ID}() Creating Tor process for user=${_user_name}, SOCKS=${_socks_port_number}, Control=${_control_port_number}"
+
+    # Create Tor data directory
+    if [[ ! -d "${_tor_data_dir}" ]]; then
+        sudo mkdir -p "${_tor_data_dir}" >>"$_log_file" 2>&1
+        if [[ $? -eq 0 ]]; then
+            _logger "info" "${_FUNCTION_ID}() Created Tor data directory: ${_tor_data_dir}"
+            sudo chown -R "${_user_name}" "${_tor_data_dir}" >>"$_log_file" 2>&1
+            if [[ $? -eq 0 ]]; then
+                _logger "info" "${_FUNCTION_ID}() Changed owner of ${_tor_data_dir} to ${_user_name}"
+            else
+                _logger "warn" "${_FUNCTION_ID}() Could not change owner of ${_tor_data_dir} to ${_user_name}"
+            fi
+        else
+            _logger "error" "${_FUNCTION_ID}() Failed to create Tor data directory: ${_tor_data_dir}"
+            return 1
+        fi
+    fi
+
+    # Construct Tor command
+    local _tor_cmd="sudo -u ${_user_name} ${TOR_BIN} --RunAsDaemon 1 --DataDirectory \"${_tor_data_dir}\" --SocksPort ${_socks_port_number} --ControlPort ${_control_port_number} --CookieAuthentication 1 --Log \"notice file ${_tor_log_file}\""
+
+    _logger "info" "${_FUNCTION_ID}() Executing Tor command: ${_tor_cmd}"
+
+    # Execute Tor
+    eval "${_tor_cmd}" >>"$_log_file" 2>&1
+    if [[ $? -eq 0 ]]; then
+        _logger "info" "${_FUNCTION_ID}() Tor process started successfully on SOCKS port: ${_socks_port_number}"
+        return 0
+    else
+        _logger "error" "${_FUNCTION_ID}() Failed to start Tor process"
+        return 1
+    fi
+}

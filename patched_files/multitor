@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# multitor main launcher
+
+_multitor_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_log_stdout="${_multitor_directory}/multitor.log"
+
+source "${_multitor_directory}/__init__"
+source "${_multitor_directory}/CreateTorProcess"
+source "${_multitor_directory}/CreateProxyProcess"
+
+function _logger() {
+    local level="$1"; shift
+    echo "$(date +'%Y-%m-%d %H:%M:%S') [$level] $*" | tee -a "$_log_stdout"
+}
+
+# Initialize multitor
+function main() {
+    local user="$1"
+    local socks_port="$2"
+    local control_port="$3"
+    local proxy="$4"
+    local haproxy_flag="$5"
+
+    _logger "info" "Starting multitor for user $user on SOCKS port $socks_port"
+
+    # Start Tor
+    CreateTorProcess "$user" "$socks_port" "$control_port"
+
+    # Start Proxy if specified
+    if [[ -n "$proxy" ]]; then
+        CreateProxyProcess "$proxy" "$haproxy_flag" "$socks_port"
+    fi
+}
+
+main "$@"
