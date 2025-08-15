@@ -155,10 +155,9 @@ class ConfigManager:
 
     def _detect_platform_paths(self) -> Dict[str, str]:
         """Detect appropriate paths based on platform"""
-        if platform.system() == "Linux":
-            base_path = "/opt/AnonSuite"
-        else:
-            base_path = "/Users/morningstar/Desktop/AnonSuite" # Assuming project root is CWD
+        # Determine project root dynamically from current file location
+        current_file = os.path.abspath(__file__)
+        base_path = os.path.dirname(os.path.dirname(current_file))  # Go up from src/ to project root
 
         return {
             "anonsuite_root": base_path,
@@ -509,7 +508,11 @@ class AnonSuiteCLI:
 
         # Initialize Plugin Manager - had to debug this integration
         try:
-            plugins_dir = self.config.get('plugins.directory', '/Users/morningstar/Desktop/AnonSuite/plugins')
+            # Determine project root dynamically for plugins
+            current_file = os.path.abspath(__file__)
+            project_root = os.path.dirname(os.path.dirname(current_file))  # Go up from src/
+            default_plugins_dir = os.path.join(project_root, "plugins")
+            plugins_dir = self.config.get('plugins.directory', default_plugins_dir)
             self.plugin_manager = PluginManager(self, plugins_dir)
         except Exception as e:
             print(f"Warning: Plugin manager initialization failed: {e}")
@@ -636,9 +639,11 @@ class AnonSuiteCLI:
 
             if choice == 1:
                 # Start multitor with our verified working configuration
+                import getpass
+                current_user = getpass.getuser()
                 cmd = [
                     "sudo", multitor_script,
-                    "--user", "morningstar",
+                    "--user", current_user,
                     "--socks-port", "9000",
                     "--control-port", "9001", 
                     "--proxy", "privoxy"
@@ -653,9 +658,11 @@ class AnonSuiteCLI:
                 # Restart services
                 self._stop_anonymity_services()
                 time.sleep(2)
+                import getpass
+                current_user = getpass.getuser()
                 cmd = [
                     "sudo", multitor_script,
-                    "--user", "morningstar",
+                    "--user", current_user,
                     "--socks-port", "9000",
                     "--control-port", "9001",
                     "--proxy", "privoxy"

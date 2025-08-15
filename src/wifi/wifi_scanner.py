@@ -20,7 +20,10 @@ class WiFiScanner:
     
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.results_dir = "/Users/morningstar/Desktop/AnonSuite/run/wifi_scans"
+        # Determine project root dynamically
+        current_file = os.path.abspath(__file__)
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file)))  # Go up from src/wifi/
+        self.results_dir = os.path.join(project_root, "run", "wifi_scans")
         self.temp_dir = "/tmp/anonsuite_wifi"
         self._ensure_directories()
     

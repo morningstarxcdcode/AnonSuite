@@ -19,10 +19,13 @@ class WiFiPumpkinWrapper:
     
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.wifipumpkin_path = "/Users/morningstar/Desktop/AnonSuite/src/wifi/wifipumpkin3"
+        # Determine project root dynamically
+        current_file = os.path.abspath(__file__)
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file)))  # Go up from src/wifi/
+        self.wifipumpkin_path = os.path.join(project_root, "src", "wifi", "wifipumpkin3")
         self.python_cmd = "python3"
-        self.results_dir = "/Users/morningstar/Desktop/AnonSuite/run/wifipumpkin_results"
-        self.config_dir = "/Users/morningstar/Desktop/AnonSuite/config/wifipumpkin"
+        self.results_dir = os.path.join(project_root, "run", "wifipumpkin_results")
+        self.config_dir = os.path.join(project_root, "config", "wifipumpkin")
         self.process = None
         self._ensure_directories()
     

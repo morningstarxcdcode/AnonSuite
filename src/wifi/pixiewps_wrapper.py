@@ -17,8 +17,11 @@ class PixiewpsWrapper:
     
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.pixiewps_path = "/Users/morningstar/Desktop/AnonSuite/src/wifi/pixiewps/pixiewps"
-        self.results_dir = "/Users/morningstar/Desktop/AnonSuite/run/pixiewps_results"
+        # Determine project root dynamically
+        current_file = os.path.abspath(__file__)
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file)))  # Go up from src/wifi/
+        self.pixiewps_path = os.path.join(project_root, "src", "wifi", "pixiewps", "pixiewps")
+        self.results_dir = os.path.join(project_root, "run", "pixiewps_results")
         self._ensure_results_dir()
     
     def _ensure_results_dir(self):
