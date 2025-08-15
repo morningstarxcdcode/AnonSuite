@@ -244,9 +244,10 @@ See our [Contributing Guide](./docs/contributing.md) for detailed guidelines.
 - **LinkedIn**: [Sourav Rajak](https://www.linkedin.com/in/sourav-rajak-6294682b2)
 - **GitHub**: [@morningstarxcdcode](https://github.com/morningstarxcdcode)
 
-### Community
-- **Issues**: [GitHub Issues](https://github.com/morningstarxcdcode/AnonSuite/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/morningstarxcdcode/AnonSuite/discussions)
+### Project Repository
+- **Repository**: [AnonSuite on GitHub](https://github.com/morningstarxcdcode/AnonSuite)
+- **Issues**: Report bugs and request features at [GitHub Issues](https://github.com/morningstarxcdcode/AnonSuite/issues)
+- **Discussions**: Join community discussions at [GitHub Discussions](https://github.com/morningstarxcdcode/AnonSuite/discussions)
 
 ## License
 
