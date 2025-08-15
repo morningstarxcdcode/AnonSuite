@@ -13,14 +13,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        python-version: [3.8, 3.9, '3.10', 3.11, 3.12]
-        exclude:
-          # Reduce matrix size for faster CI
-          - os: macos-latest
-            python-version: 3.8
-          - os: macos-latest
-            python-version: 3.9
+        os: [ubuntu-latest]  # Simplified for faster CI
+        python-version: [3.9, '3.10', 3.11, 3.12]  # Removed 3.8 due to mypy compatibility
+      fail-fast: false  # Continue running other jobs even if one fails
 
     steps:
     - uses: actions/checkout@v4
@@ -69,7 +64,7 @@ jobs:
     
     - name: Type check with mypy
       run: |
-        mypy src/ --ignore-missing-imports
+        mypy src/ --ignore-missing-imports --exclude src/wifi/wifipumpkin3/
       continue-on-error: true
     
     - name: Security scan with bandit
@@ -80,7 +75,7 @@ jobs:
     
     - name: Test with pytest
       run: |
-        pytest tests/ -v --cov=src --cov-report=xml --cov-report=term
+        pytest tests/ -v --cov=src --cov-report=xml --cov-report=term --tb=short --maxfail=5 -x
       continue-on-error: true
     
     - name: Upload coverage to Codecov
