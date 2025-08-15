@@ -1,13 +1,15 @@
-import pytest
-import subprocess
 import os
+import subprocess
 import sys
+
+import pytest
 
 # Add the src directory to the Python path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'src')))
 
 from anonsuite import AnonSuiteCLI
 from wifi.pixiewps_wrapper import PixiewpsWrapper
+
 
 # Mock subprocess.run to prevent actual command execution
 @pytest.fixture(autouse=True)
@@ -25,16 +27,16 @@ class TestCLIIntegration:
     def test_pixiewps_wrapper_run_attack(self, mocker):
         # Test the pixiewps_wrapper's run_attack method
         mock_run = mocker.patch('subprocess.run', return_value=mocker.Mock(returncode=0, stdout="mocked pixiewps output", stderr=""))
-        
+
         wrapper = PixiewpsWrapper()
         interface = "wlan0mon"
         bssid = "00:11:22:33:44:55"
-        
+
         result = wrapper.run_attack(interface, bssid)
-        
+
         import pytest
-import subprocess
 import os
+import subprocess
 import sys
 from unittest.mock import MagicMock
 
@@ -43,7 +45,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 
 from anonsuite import AnonSuiteCLI
 from wifi.pixiewps_wrapper import PixiewpsWrapper
-from wifi.wifipumpkin_wrapper import WiFiPumpkinWrapper # Corrected import
+from wifi.wifipumpkin_wrapper import WiFiPumpkinWrapper  # Corrected import
+
 
 # Mock subprocess.run to prevent actual command execution
 @pytest.fixture(autouse=True)
@@ -71,13 +74,13 @@ class TestCLIIntegration:
     def test_pixiewps_wrapper_run_attack(self, mocker):
         # Test the pixiewps_wrapper's run_attack method
         mock_run = mocker.patch('subprocess.run', return_value=mocker.Mock(returncode=0, stdout="mocked pixiewps output", stderr=""))
-        
+
         wrapper = PixiewpsWrapper()
         interface = "wlan0mon"
         bssid = "00:11:22:33:44:55"
-        
+
         result = wrapper.run_attack(interface, bssid)
-        
+
         assert result is True
         # Adjust the expected call to match the actual implementation in PixiewpsWrapper
         # The wrapper only adds -b and -v by default when other args are None

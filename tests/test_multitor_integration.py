@@ -1,9 +1,10 @@
-import subprocess
-import time
-import pytest
-import requests
 import os
 import socket
+import subprocess
+import time
+
+import pytest
+import requests
 
 # Define absolute path to multitor script
 MULTITOR_SCRIPT = os.path.expanduser("~/Desktop/AnonSuite/src/anonymity/multitor/multitor")
@@ -52,7 +53,7 @@ def check_port_listening(port, host='127.0.0.1'):
         s.bind((host, port))
         s.close()
         return False # Port is free, so nothing is listening
-    except socket.error as e:
+    except OSError as e:
         if e.errno in [48, 98]: # Address already in use (48 on macOS, 98 on Linux)
             return True # Port is listening
         else:

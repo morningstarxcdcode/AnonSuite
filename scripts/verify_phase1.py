@@ -4,16 +4,16 @@ AnonSuite Phase 1 Verification Script
 Verifies that multitor component is working correctly
 """
 
-import subprocess
 import socket
+import subprocess
 import sys
-import time
 from pathlib import Path
+
 
 def check_tor_process():
     """Check if Tor process is running"""
     try:
-        result = subprocess.run(['pgrep', '-f', 'tor.*9000'], 
+        result = subprocess.run(['pgrep', '-f', 'tor.*9000'],
                               capture_output=True, text=True)
         return result.returncode == 0
     except Exception as e:
@@ -48,10 +48,10 @@ def check_tor_connectivity():
     """Test Tor connectivity via SOCKS proxy using curl"""
     try:
         result = subprocess.run([
-            'curl', '--socks5-hostname', '127.0.0.1:9000', 
+            'curl', '--socks5-hostname', '127.0.0.1:9000',
             'https://check.torproject.org/', '--silent', '--max-time', '30'
         ], capture_output=True, text=True, timeout=35)
-        
+
         return result.returncode == 0 and 'Congratulations' in result.stdout
     except Exception as e:
         print(f"Error checking Tor connectivity: {e}")
@@ -61,14 +61,14 @@ def check_log_files():
     """Check if log files exist and are readable"""
     log_file = Path('/Users/morningstar/Desktop/AnonSuite/src/anonymity/multitor/multitor.log')
     tor_log = Path('/Users/morningstar/Desktop/AnonSuite/src/anonymity/multitor/tor_9000/tor.log')
-    
+
     return log_file.exists() and tor_log.exists()
 
 def main():
     """Run all verification checks"""
     print("🔍 AnonSuite Phase 1 Verification")
     print("=" * 40)
-    
+
     checks = [
         ("Tor Process Running", check_tor_process),
         ("SOCKS Port (9000) Accessible", check_socks_port),
@@ -76,7 +76,7 @@ def main():
         ("Log Files Present", check_log_files),
         ("Tor Connectivity Working", check_tor_connectivity),
     ]
-    
+
     results = []
     for name, check_func in checks:
         print(f"Checking {name}...", end=" ")
@@ -88,11 +88,11 @@ def main():
         except Exception as e:
             print(f"❌ ERROR: {e}")
             results.append(False)
-    
+
     print("\n" + "=" * 40)
     passed = sum(results)
     total = len(results)
-    
+
     if passed == total:
         print(f"🎉 Phase 1 Complete! All {total} checks passed.")
         print("✅ Multitor component is fully operational")

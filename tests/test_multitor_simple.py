@@ -1,8 +1,9 @@
-import subprocess
-import time
-import pytest
 import os
 import socket
+import subprocess
+import time
+
+import pytest
 import requests
 
 # Define absolute path to multitor script
@@ -35,7 +36,7 @@ def test_multitor_startup():
     # Clean up any existing processes
     subprocess.run(["sudo", "killall", "tor"], check=False)
     subprocess.run(["sudo", "killall", "privoxy"], check=False)
-    
+
     # Ensure log file is clean before starting
     if os.path.exists(MULTITOR_LOG):
         os.remove(MULTITOR_LOG)
@@ -51,10 +52,10 @@ def test_multitor_startup():
     ]
 
     print(f"\nStarting multitor: {' '.join(command)}")
-    
+
     # Run multitor
     result = subprocess.run(command, capture_output=True, text=True)
-    
+
     # Give services time to start
     time.sleep(5)
 
@@ -69,7 +70,7 @@ def test_multitor_startup():
     # Check log file for success messages
     log_content = ""
     if os.path.exists(MULTITOR_LOG):
-        with open(MULTITOR_LOG, 'r') as f:
+        with open(MULTITOR_LOG) as f:
             log_content = f.read()
         print(f"Log content:\n{log_content}")
 
@@ -90,7 +91,7 @@ def test_basic_socks_connection():
     # Start multitor
     subprocess.run(["sudo", "killall", "tor"], check=False)
     subprocess.run(["sudo", "killall", "privoxy"], check=False)
-    
+
     command = [
         "sudo", MULTITOR_SCRIPT,
         "--user", TEST_USER,
@@ -99,29 +100,29 @@ def test_basic_socks_connection():
         "--proxy", "privoxy",
         "--haproxy", "yes"
     ]
-    
+
     subprocess.run(command, capture_output=True, text=True)
     time.sleep(10)  # Give Tor more time to bootstrap
-    
+
     try:
         # Test basic HTTP connectivity through Privoxy (which should route through Tor)
         proxies = {
             'http': f'http://127.0.0.1:{PRIVOXY_PORT}',
             'https': f'http://127.0.0.1:{PRIVOXY_PORT}'
         }
-        
+
         # Use a simple, reliable service
         response = requests.get("http://httpbin.org/ip", proxies=proxies, timeout=15)
         response.raise_for_status()
         data = response.json()
         print(f"HTTP request through Privoxy successful: {data}")
-        
+
         assert 'origin' in data, "HTTP proxy request failed"
-        
+
     except Exception as e:
         print(f"HTTP proxy test failed: {e}")
         # Don't fail the test for network issues, just log them
-        
+
     finally:
         # Cleanup
         subprocess.run(["sudo", "killall", "tor"], check=False)

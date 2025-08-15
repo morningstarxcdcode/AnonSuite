@@ -4,25 +4,25 @@ AnonSuite Phase 2 Kickoff Script
 Prepares the development environment for Phase 2 implementation
 """
 
-import os
 import sys
 from pathlib import Path
+
 
 def create_directory_structure():
     """Create necessary directories for Phase 2"""
     base_path = Path('/Users/morningstar/Desktop/AnonSuite')
-    
+
     directories = [
         'src/wifi',
         'src/config',
         'tests/unit',
-        'tests/integration', 
+        'tests/integration',
         'tests/security',
         'tests/fixtures',
         'docs',
         'config'
     ]
-    
+
     print("📁 Creating directory structure...")
     for directory in directories:
         dir_path = base_path / directory
@@ -32,21 +32,21 @@ def create_directory_structure():
 def analyze_existing_wifi_scripts():
     """Analyze existing WiFi scripts"""
     wifi_path = Path('/Users/morningstar/Desktop/AnonSuite/src/wifi')
-    
+
     print("\n🔍 Analyzing existing WiFi scripts...")
-    
+
     scripts = [
         'run_pixiewps.sh',
-        'run_wifipumpkin.sh', 
+        'run_wifipumpkin.sh',
         'compile_pixiewps.sh'
     ]
-    
+
     for script in scripts:
         script_path = wifi_path / script
         if script_path.exists():
             print(f"   ✅ Found: {script}")
             # Read and display first few lines
-            with open(script_path, 'r') as f:
+            with open(script_path) as f:
                 lines = f.readlines()[:5]
                 for i, line in enumerate(lines, 1):
                     print(f"      {i}: {line.rstrip()}")
@@ -56,7 +56,7 @@ def analyze_existing_wifi_scripts():
 def create_phase2_templates():
     """Create template files for Phase 2 development"""
     base_path = Path('/Users/morningstar/Desktop/AnonSuite')
-    
+
     templates = {
         'src/wifi/pixiewps_wrapper.py': '''#!/usr/bin/env python3
 """
@@ -84,7 +84,7 @@ class PixiewpsWrapper:
         # TODO: Implement BSSID validation
         pass
 ''',
-        
+
         'src/wifi/wifipumpkin_wrapper.py': '''#!/usr/bin/env python3
 """
 WiFiPumpkin3 Wrapper - Rogue AP Framework Interface
@@ -111,7 +111,7 @@ class WiFiPumpkinWrapper:
         # TODO: Implement evil twin attack
         pass
 ''',
-        
+
         'src/wifi/wifi_scanner.py': '''#!/usr/bin/env python3
 """
 WiFi Scanner - Network Reconnaissance Module
@@ -139,7 +139,7 @@ class WiFiScanner:
         # TODO: Implement security analysis
         pass
 ''',
-        
+
         'tests/unit/test_wifi_tools.py': '''#!/usr/bin/env python3
 """
 Unit tests for WiFi tools integration
@@ -185,7 +185,7 @@ class TestWiFiScanner:
         scanner = WiFiScanner()
         assert scanner is not None
 ''',
-        
+
         'config/anonsuite.conf': '''# AnonSuite Configuration File
 # Phase 2 - Core Features Implementation
 
@@ -216,12 +216,12 @@ validate_inputs = true
 audit_trail = true
 '''
     }
-    
+
     print("\n📝 Creating Phase 2 template files...")
     for file_path, content in templates.items():
         full_path = base_path / file_path
         full_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         if not full_path.exists():
             with open(full_path, 'w') as f:
                 f.write(content)
@@ -233,11 +233,11 @@ def display_phase2_roadmap():
     """Display Phase 2 development roadmap"""
     print("\n🗺️  Phase 2 Development Roadmap")
     print("=" * 50)
-    
+
     tasks = [
         "1. Analyze existing WiFi scripts (run_*.sh)",
         "2. Implement pixiewps_wrapper.py",
-        "3. Implement wifipumpkin_wrapper.py", 
+        "3. Implement wifipumpkin_wrapper.py",
         "4. Implement wifi_scanner.py",
         "5. Enhance src/anonsuite.py with argparse",
         "6. Create configuration management system",
@@ -246,10 +246,10 @@ def display_phase2_roadmap():
         "9. Integration testing with Phase 1",
         "10. Documentation updates"
     ]
-    
+
     for task in tasks:
         print(f"   {task}")
-    
+
     print("\n📋 Next Steps:")
     print("   • Review existing WiFi scripts in src/wifi/")
     print("   • Start implementing pixiewps_wrapper.py")
@@ -260,31 +260,31 @@ def main():
     """Main Phase 2 kickoff function"""
     print("🚀 AnonSuite Phase 2 Kickoff")
     print("=" * 40)
-    
+
     # Verify Phase 1 completion
     print("🔍 Verifying Phase 1 completion...")
     phase1_script = Path('/Users/morningstar/Desktop/AnonSuite/scripts/verify_phase1.py')
     if phase1_script.exists():
         import subprocess
-        result = subprocess.run([sys.executable, str(phase1_script)], 
+        result = subprocess.run([sys.executable, str(phase1_script)],
                               capture_output=True, text=True)
         if result.returncode == 0:
             print("   ✅ Phase 1 verified - ready for Phase 2")
         else:
             print("   ❌ Phase 1 incomplete - resolve issues first")
             return 1
-    
+
     # Setup Phase 2 environment
     create_directory_structure()
     analyze_existing_wifi_scripts()
     create_phase2_templates()
     display_phase2_roadmap()
-    
+
     print("\n🎉 Phase 2 environment ready!")
     print("📁 Template files created in src/wifi/")
     print("🧪 Test templates created in tests/")
     print("⚙️  Configuration template created")
-    
+
     return 0
 
 if __name__ == "__main__":
