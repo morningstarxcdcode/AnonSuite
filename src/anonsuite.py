@@ -12,44 +12,46 @@ FIXME: WiFi module imports are a bit messy - clean this up when we have time
 """
 
 import argparse
+import json  # For config wizard and plugin metadata - might refactor this later
+import logging
 import os
 import platform
 import signal
 import subprocess
 import sys
-import time
 import threading
-import json  # For config wizard and plugin metadata - might refactor this later
+import time
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, List, Optional, Type, Callable, Any
+from typing import Any, Dict, List, Optional
 
 # WiFi module imports - this got complicated due to optional dependencies
 # TODO: refactor this import mess when we have a proper dependency manager
 try:
     from wifi.pixiewps_wrapper import PixiewpsWrapper
-    from wifi.wifipumpkin_wrapper import WiFiPumpkinWrapper
+
     # WiFi scanner should be working now
-    from wifi.wifi_scanner import WiFiScanner 
+    from wifi.wifi_scanner import WiFiScanner
+    from wifi.wifipumpkin_wrapper import WiFiPumpkinWrapper
     WIFI_AVAILABLE = True
 except ImportError as e:
     # Graceful degradation when WiFi modules aren't available
     print(f"WiFi modules not fully available: {e}")
     WIFI_AVAILABLE = False
-    
+
     # Dummy classes to prevent crashes - learned this pattern the hard way
     class PixiewpsWrapper:
         def __init__(self):
             self.available = False
         def run_attack(self, *args, **kwargs):
             return {"status": "error", "message": "Pixiewps not available"}
-    
+
     class WiFiPumpkinWrapper:
         def __init__(self):
             self.available = False
         def start_ap(self, *args, **kwargs):
             return {"status": "error", "message": "WiFiPumpkin3 not available"}
-    
+
     class WiFiScanner:
         def __init__(self):
             self.available = False
@@ -206,7 +208,7 @@ class ConfigManager:
         config_file = self.config.config_file_path
         if os.path.exists(config_file):
             try:
-                with open(config_file, 'r') as f:
+                with open(config_file) as f:
                     user_settings = json.load(f)
                     # Update config with user settings
                     for key, value in user_settings.items():
@@ -222,7 +224,7 @@ class ConfigManager:
         """Saves current user-configurable settings to a JSON file."""
         config_dir = os.path.dirname(self.config.config_file_path)
         os.makedirs(config_dir, exist_ok=True)
-        
+
         user_settings = {
             "log_level": self.config.log_level,
             "log_file": self.config.log_file,
@@ -299,7 +301,7 @@ class PluginManager:
     def _load_plugins(self):
         """Load plugins with improved error handling and debugging"""
         self.loaded_plugins = {}
-        
+
         if not os.path.exists(self.plugin_dir):
             print(f"{VisualTokens.COLORS['warning']} Plugin directory not found: {self.plugin_dir}{VisualTokens.COLORS['reset']}")
             return
@@ -308,49 +310,49 @@ class PluginManager:
         original_path = sys.path.copy()
         sys.path.insert(0, self.plugin_dir)
         sys.path.insert(0, os.path.join(os.path.dirname(__file__)))  # Add src directory
-        
-        plugin_files = [f for f in os.listdir(self.plugin_dir) 
+
+        plugin_files = [f for f in os.listdir(self.plugin_dir)
                        if f.endswith(".py") and not f.startswith("__")]
-        
+
         if not plugin_files:
             print(f"{VisualTokens.COLORS['warning']} No plugin files found in {self.plugin_dir}{VisualTokens.COLORS['reset']}")
             sys.path = original_path
             return
-        
+
         for filename in plugin_files:
             module_name = filename[:-3]
             try:
                 # Use importlib for better import handling
                 import importlib.util
-                
+
                 plugin_path = os.path.join(self.plugin_dir, filename)
                 spec = importlib.util.spec_from_file_location(module_name, plugin_path)
-                
+
                 if spec is None:
                     print(f"{VisualTokens.COLORS['warning']} Could not load spec for {filename}{VisualTokens.COLORS['reset']}")
                     continue
-                
+
                 module = importlib.util.module_from_spec(spec)
-                
+
                 # Execute the module
                 spec.loader.exec_module(module)
-                
+
                 # Look for plugin classes
                 plugin_found = False
                 for attr_name in dir(module):
                     attr = getattr(module, attr_name)
-                    
+
                     # Check if it's a class that looks like a plugin
-                    if (isinstance(attr, type) and 
-                        hasattr(attr, 'run') and 
+                    if (isinstance(attr, type) and
+                        hasattr(attr, 'run') and
                         hasattr(attr, '__init__') and
                         attr_name.endswith('Plugin') and
                         attr_name != 'AnonSuitePlugin'):
-                        
+
                         try:
                             # Try to instantiate the plugin
                             plugin_instance = attr(self.cli)
-                            
+
                             # Ensure it has required attributes
                             if not hasattr(plugin_instance, 'name'):
                                 plugin_instance.name = attr_name
@@ -358,26 +360,26 @@ class PluginManager:
                                 plugin_instance.version = "1.0.0"
                             if not hasattr(plugin_instance, 'description'):
                                 plugin_instance.description = "No description available"
-                            
+
                             self.loaded_plugins[plugin_instance.name] = plugin_instance
                             print(f"{VisualTokens.COLORS['primary']} Loaded plugin: {plugin_instance.name} v{plugin_instance.version}{VisualTokens.COLORS['reset']}")
                             plugin_found = True
                             break
-                            
+
                         except Exception as e:
                             print(f"{VisualTokens.COLORS['error']} Error instantiating plugin {attr_name}: {e}{VisualTokens.COLORS['reset']}")
-                
+
                 if not plugin_found:
                     print(f"{VisualTokens.COLORS['warning']} No valid plugin class found in {filename}{VisualTokens.COLORS['reset']}")
-                    
+
             except Exception as e:
                 print(f"{VisualTokens.COLORS['error']} Error loading plugin {filename}: {e}{VisualTokens.COLORS['reset']}")
                 import traceback
                 print(f"{VisualTokens.COLORS['muted']} {traceback.format_exc()}{VisualTokens.COLORS['reset']}")
-        
+
         # Restore original path
         sys.path = original_path
-        
+
         if self.loaded_plugins:
             print(f"{VisualTokens.COLORS['success']} Successfully loaded {len(self.loaded_plugins)} plugin(s){VisualTokens.COLORS['reset']}")
         else:
@@ -399,24 +401,24 @@ class PluginManager:
 # Progress indicators for better user experience
 class ProgressSpinner:
     """Simple progress spinner for long-running operations"""
-    
+
     def __init__(self, message: str = "Working..."):
         self.message = message
         self.spinner_chars = ['|', '/', '-', '\\']
         self.running = False
         self.spinner_thread = None
         self._current_char = 0
-    
+
     def start(self):
         """Start the spinner"""
         if self.running:
             return
-        
+
         self.running = True
         self.spinner_thread = threading.Thread(target=self._spin)
         self.spinner_thread.daemon = True
         self.spinner_thread.start()
-    
+
     def stop(self):
         """Stop the spinner"""
         self.running = False
@@ -424,7 +426,7 @@ class ProgressSpinner:
             self.spinner_thread.join(timeout=1)
         # Clear the spinner line
         print('\r' + ' ' * (len(self.message) + 10) + '\r', end='', flush=True)
-    
+
     def _spin(self):
         """Internal spinner animation"""
         while self.running:
@@ -435,40 +437,40 @@ class ProgressSpinner:
 
 class ProgressBar:
     """Simple progress bar for operations with known duration"""
-    
+
     def __init__(self, total: int, message: str = "Progress", width: int = 40):
         self.total = total
         self.current = 0
         self.message = message
         self.width = width
         self.start_time = time.time()
-    
+
     def update(self, increment: int = 1):
         """Update progress bar"""
         self.current = min(self.current + increment, self.total)
         self._draw()
-    
+
     def set_progress(self, current: int):
         """Set absolute progress"""
         self.current = min(current, self.total)
         self._draw()
-    
+
     def finish(self):
         """Complete the progress bar"""
         self.current = self.total
         self._draw()
         print()  # New line after completion
-    
+
     def _draw(self):
         """Draw the progress bar"""
         if self.total == 0:
             return
-        
+
         percentage = (self.current / self.total) * 100
         filled_width = int((self.current / self.total) * self.width)
-        
+
         bar = '█' * filled_width + '░' * (self.width - filled_width)
-        
+
         # Calculate ETA
         elapsed = time.time() - self.start_time
         if self.current > 0:
@@ -476,7 +478,7 @@ class ProgressBar:
             eta_str = f" ETA: {int(eta)}s" if eta > 1 else ""
         else:
             eta_str = ""
-        
+
         print(f'\r{self.message}: [{bar}] {percentage:.1f}%{eta_str}', end='', flush=True)
 
 # --- Enhanced CLI Interface ---
@@ -496,7 +498,7 @@ class AnonSuiteCLI:
                 'get': lambda self, key, default=None: default,
                 'list_profiles': lambda self: ['default']
             })()
-        
+
         self.running = True
 
         # Initialize WiFi tool wrappers - graceful degradation if modules missing
@@ -584,7 +586,7 @@ class AnonSuiteCLI:
 
             if progress_indicator:
                 progress_indicator.stop()
-            
+
             success_msg = f"{VisualTokens.SYMBOLS['success']} Operation completed successfully"
             print(self._colorize(success_msg, 'success'))
             return True
@@ -625,7 +627,7 @@ class AnonSuiteCLI:
             self._print_menu("Anonymity Module", [
                 "Start AnonSuite (Tor + Proxy)",
                 "Stop AnonSuite",
-                "Restart AnonSuite", 
+                "Restart AnonSuite",
                 "Check Status",
                 "Monitor Performance",
                 "View Tor Logs"
@@ -640,7 +642,7 @@ class AnonSuiteCLI:
                     "sudo", multitor_script,
                     "--user", "morningstar",
                     "--socks-port", "9000",
-                    "--control-port", "9001", 
+                    "--control-port", "9001",
                     "--proxy", "privoxy"
                 ]
                 self._execute_command(cmd, "Starting anonymity services", show_progress=True)
@@ -773,7 +775,7 @@ class AnonSuiteCLI:
     def _monitor_performance(self) -> None:
         """Monitor system performance and provide optimization insights."""
         print(f"\n{self._colorize('Performance Monitor & Optimization', 'accent')}\n")
-        
+
         # Run our performance monitor tool (if it exists)
         perf_script = os.path.join(self.config.anonsuite_root, "scripts", "performance_monitor.sh")
 
@@ -788,7 +790,7 @@ class AnonSuiteCLI:
         print(f"{VisualTokens.SYMBOLS['bullet']} Memory Usage: Python's memory footprint can be optimized by releasing unused resources and avoiding large data structures where possible.")
         print(f"{VisualTokens.SYMBOLS['bullet']} Code Cleanup: Regular code reviews, removing dead code, and refactoring complex functions can improve maintainability and performance.")
         print(f"{VisualTokens.SYMBOLS['bullet']} External Calls: Minimize redundant external tool calls and optimize their execution parameters.")
-        
+
         try:
             import psutil
             print(f"\n{self._colorize('Current Resource Usage:', 'info')}")
@@ -862,7 +864,7 @@ class AnonSuiteCLI:
     def _wifi_network_scan(self) -> None:
         """Perform WiFi network scanning"""
         print(f"\n{self._colorize('WiFi Network Scanner', 'accent')}")
-        
+
         # Check for wireless interfaces
         try:
             result = subprocess.run(["iwconfig"], capture_output=True, text=True)
@@ -873,12 +875,12 @@ class AnonSuiteCLI:
                 print(f"{VisualTokens.SYMBOLS['warning']} iwconfig not available - install wireless-tools")
         except FileNotFoundError:
             print(f"{VisualTokens.SYMBOLS['warning']} iwconfig not found - install wireless-tools")
-        
+
         # Run network scan using our scanner
         scanner_script = os.path.join(self.config.wifi_module, "wifi_scanner.py")
         if os.path.exists(scanner_script):
             # Assuming WiFiScanner class exists and has a scan_networks method
-            # self.wifi_scanner.scan_networks() 
+            # self.wifi_scanner.scan_networks()
             self._execute_command(["python3", scanner_script], "Scanning for WiFi networks", show_progress=True)
         else:
             print(f"{VisualTokens.SYMBOLS['warning']} WiFi scanner not found")
@@ -886,15 +888,15 @@ class AnonSuiteCLI:
     def _wifi_network_info(self) -> None:
         """Display detailed network information"""
         print(f"\n{self._colorize('Network Information', 'accent')}")
-        
+
         # Show current network status
         try:
             # Check current WiFi connection
-            result = subprocess.run(["networksetup", "-getairportnetwork", "en0"], 
+            result = subprocess.run(["networksetup", "-getairportnetwork", "en0"],
                                   capture_output=True, text=True)
             if result.returncode == 0:
                 print(f"{VisualTokens.SYMBOLS['info']} Current WiFi: {result.stdout.strip()}")
-            
+
             # Show network interfaces
             result = subprocess.run(["ifconfig"], capture_output=True, text=True)
             if result.returncode == 0:
@@ -903,7 +905,7 @@ class AnonSuiteCLI:
                 for line in lines:
                     if 'en0:' in line or 'wlan' in line:
                         print(f"{VisualTokens.SYMBOLS['info']} {line.strip()}")
-                        
+
         except Exception as e:
             print(f"{VisualTokens.SYMBOLS['error']} Error getting network info: {e}")
 
@@ -912,7 +914,7 @@ class AnonSuiteCLI:
         print(f"\n{self._colorize('WiFiPumpkin3 Rogue AP Attack', 'accent')}")
         print(f"{VisualTokens.SYMBOLS['warning']} This functionality is currently non-operational due to internal issues with WiFiPumpkin3.")
         print(f"{VisualTokens.SYMBOLS['info']} Please refer to the project's documentation for updates on WiFiPumpkin3 compatibility.")
-        
+
         # Attempt to call the wrapper, which will log the error internally
         self.wifipumpkin_wrapper.start_ap(config={}) # Pass an empty config for now
         print(f"{VisualTokens.SYMBOLS['error']} WiFiPumpkin3 could not be started.")
@@ -941,46 +943,46 @@ class AnonSuiteCLI:
     def _setup_monitor_mode(self) -> None:
         """Setup wireless interface in monitor mode"""
         print(f"\n{self._colorize('Monitor Mode Setup', 'accent')}")
-        
+
         # List available interfaces
         try:
             result = subprocess.run(["iwconfig"], capture_output=True, text=True)
             if result.returncode == 0:
                 print(f"{VisualTokens.SYMBOLS['info']} Available interfaces:")
                 print(result.stdout)
-                
+
                 interface = input(f"{self._colorize('Interface to use (e.g., wlan0): ', 'accent')}")
-                
+
                 if interface:
                     print(f"{VisualTokens.SYMBOLS['info']} Setting {interface} to monitor mode...")
-                    
+
                     # Commands to set monitor mode
                     commands = [
                         ["sudo", "ifconfig", interface, "down"],
                         ["sudo", "iwconfig", interface, "mode", "monitor"],
                         ["sudo", "ifconfig", interface, "up"]
                     ]
-                    
+
                     for cmd in commands:
                         self._execute_command(cmd, f"Executing: {' '.join(cmd)}", show_progress=True)
-                        
+
                     print(f"{VisualTokens.SYMBOLS['success']} Monitor mode setup complete")
                 else:
                     print(f"{VisualTokens.SYMBOLS['warning']} No interface specified")
             else:
                 print(f"{VisualTokens.SYMBOLS['error']} iwconfig not available")
-                
+
         except FileNotFoundError:
             print(f"{VisualTokens.SYMBOLS['error']} Wireless tools not installed")
 
     def _analyze_captures(self) -> None:
         """Analyze packet captures"""
         print(f"\n{self._colorize('Capture Analysis', 'accent')}")
-        
+
         # Look for capture files
         capture_extensions = ['.pcap', '.cap', '.pcapng']
         capture_files = []
-        
+
         # Check common capture directories
         search_dirs = [
             os.path.expanduser("~/Desktop"),
@@ -988,30 +990,30 @@ class AnonSuiteCLI:
             "/tmp",
             self.config.anonsuite_root
         ]
-        
+
         for directory in search_dirs:
             if os.path.exists(directory):
                 for file in os.listdir(directory):
                     if any(file.endswith(ext) for ext in capture_extensions):
                         capture_files.append(os.path.join(directory, file))
-        
+
         if capture_files:
             print(f"{VisualTokens.SYMBOLS['info']} Found capture files:")
             for i, file in enumerate(capture_files[:10], 1):  # Show first 10
                 print(f"  {i}. {os.path.basename(file)}")
-            
+
             try:
                 choice = int(input(f"{self._colorize('Select file (number): ', 'accent')}"))
                 if 1 <= choice <= len(capture_files):
                     selected_file = capture_files[choice - 1]
-                    
+
                     # Basic analysis using tcpdump if available
                     try:
                         self._execute_command(["tcpdump", "-r", selected_file, "-c", "10"], "Analyzing capture file", show_progress=True)
-                        
+
                     except FileNotFoundError:
                         print(f"{VisualTokens.SYMBOLS['warning']} tcpdump not available for analysis")
-                        
+
             except (ValueError, IndexError):
                 print(f"{VisualTokens.SYMBOLS['error']} Invalid selection")
         else:
@@ -1020,29 +1022,29 @@ class AnonSuiteCLI:
     def _security_assessment(self) -> None:
         """Perform WiFi security assessment"""
         print(f"\n{self._colorize('WiFi Security Assessment', 'accent')}")
-        
+
         # Load sample networks for assessment
         scenarios_file = os.path.join(self.config.anonsuite_root, "scenarios", "sample_networks.json")
-        
+
         if os.path.exists(scenarios_file):
             try:
-                with open(scenarios_file, 'r') as f:
+                with open(scenarios_file) as f:
                     scenarios = json.load(f)
-                
+
                 networks = scenarios.get("sample_networks", {}).get("networks", [])
-                
+
                 if networks:
                     print(f"{VisualTokens.SYMBOLS['info']} Analyzing {len(networks)} sample networks...")
-                    
+
                     vulnerable_count = 0
                     for network in networks:
                         encryption = network.get("encryption", "Unknown")
                         wps_enabled = network.get("wps_enabled", False)
-                        
+
                         # Simple vulnerability assessment
                         vulnerabilities = []
                         risk_score = 0
-                        
+
                         if encryption == "Open":
                             vulnerabilities.append("No encryption")
                             risk_score = 10
@@ -1055,21 +1057,21 @@ class AnonSuiteCLI:
                         elif encryption in ["WPA", "WPA-PSK"]:
                             vulnerabilities.append("Legacy WPA")
                             risk_score = 5
-                        
+
                         if vulnerabilities:
                             vulnerable_count += 1
                             print(f"\n{VisualTokens.SYMBOLS['warning']} {network['ssid']} (Risk: {risk_score}/10)")
                             for vuln in vulnerabilities:
                                 print(f"  - {vuln}")
-                    
+
                     print(f"\n{VisualTokens.SYMBOLS['info']} Assessment Summary:")
                     print(f"  Total networks: {len(networks)}")
                     print(f"  Vulnerable networks: {vulnerable_count}")
                     print(f"  Security ratio: {((len(networks) - vulnerable_count) / len(networks) * 100):.1f}%")
-                    
+
                 else:
                     print(f"{VisualTokens.SYMBOLS['warning']} No networks found in scenarios")
-                    
+
             except Exception as e:
                 print(f"{VisualTokens.SYMBOLS['error']} Error loading scenarios: {e}")
         else:
@@ -1243,7 +1245,7 @@ class AnonSuiteCLI:
     def _view_configuration(self) -> None:
         """View current configuration"""
         print(f"\n{self._colorize('Current Configuration', 'accent')}")
-        
+
         # Show basic configuration info
         print(f"{VisualTokens.SYMBOLS['info']} AnonSuite Root: {self.config.anonsuite_root}")
         print(f"{VisualTokens.SYMBOLS['info']} Source Root: {self.config.src_root}")
@@ -1298,7 +1300,7 @@ class AnonSuiteCLI:
     def _log_analysis(self) -> None:
         """Log analysis"""
         print(f"\n{self._colorize('Log Analysis', 'accent')}")
-        
+
         # Run log analyzer if available
         log_analyzer = os.path.join(self.config.anonsuite_root, "log", "analyze_logs.py")
         if os.path.exists(log_analyzer):
@@ -1320,7 +1322,7 @@ class AnonSuiteCLI:
             ("System Updates (Placeholder)", self._check_system_updates),
             ("Firewall Status (Placeholder)", self._check_firewall_status)
         ]
-        
+
         for check_name, check_func in checks:
             print(f"{self._colorize('Checking:', 'muted')} {check_name}...")
             try:
@@ -1349,9 +1351,9 @@ class AnonSuiteCLI:
         if not os.path.exists(privoxy_config_path):
             print(f"{VisualTokens.SYMBOLS['warning']} Privoxy config not found at {privoxy_config_path}. Cannot verify.")
             return False
-        
+
         try:
-            with open(privoxy_config_path, 'r') as f:
+            with open(privoxy_config_path) as f:
                 content = f.read()
                 # Check for common security settings
                 if "forward-socks5 / 127.0.0.1:9000 ." in content and "listen-address 127.0.0.1:8118" in content:
@@ -1379,22 +1381,22 @@ class AnonSuiteCLI:
     def _resource_usage(self) -> None:
         """Resource usage monitoring"""
         print(f"\n{self._colorize('Resource Usage', 'accent')}")
-        
+
         try:
             import psutil
-            
+
             # CPU usage
             cpu_percent = psutil.cpu_percent(interval=1)
             print(f"{VisualTokens.SYMBOLS['info']} CPU Usage: {cpu_percent}%")
-            
+
             # Memory usage
             memory = psutil.virtual_memory()
             print(f"{VisualTokens.SYMBOLS['info']} Memory Usage: {memory.percent}%")
-            
+
             # Disk usage
             disk = psutil.disk_usage('/')
             print(f"{VisualTokens.SYMBOLS['info']} Disk Usage: {disk.percent}%")
-            
+
         except ImportError:
             print(f"{VisualTokens.SYMBOLS['warning']} psutil not available for detailed resource monitoring. Install with 'pip install psutil'.")
 
@@ -1412,25 +1414,25 @@ class AnonSuiteCLI:
                 "-r", self.config.src_root,
                 "-f", "txt", # Human-readable format
                 "-ll", # Show low confidence issues
-                "--exclude", os.path.join(self.config.src_root, "anonymity", "multitor") + "," + 
-                             os.path.join(self.config.src_root, "wifi", "wifipumpkin3") + "," + 
+                "--exclude", os.path.join(self.config.src_root, "anonymity", "multitor") + "," +
+                             os.path.join(self.config.src_root, "wifi", "wifipumpkin3") + "," +
                              os.path.join(self.config.src_root, "wifi", "pixiewps"), # Exclude third-party/external tools
                 "-o", os.path.join(self.config.anonsuite_root, "bandit_report.txt") # Output to a file
             ]
-            
+
             print(f"{VisualTokens.SYMBOLS['arrow']} Executing: {' '.join(bandit_command)}\n")
             result = subprocess.run(bandit_command, capture_output=True, text=True, check=False, timeout=300) # Increased timeout for scan
 
             print(f"\n{self._colorize('Bandit Scan Results:', 'primary')}")
             print(result.stdout)
-            
+
             if result.returncode == 0:
                 print(f"{VisualTokens.SYMBOLS['success']} Bandit scan completed with no issues found.")
             elif result.returncode == 1:
                 print(f"{VisualTokens.SYMBOLS['warning']} Bandit scan completed with issues. Review the report above and in bandit_report.txt.")
             else:
                 print(f"{VisualTokens.SYMBOLS['error']} Bandit scan encountered an error (Exit Code: {result.returncode}).\n{result.stderr}")
-            
+
             print(f"{VisualTokens.SYMBOLS['info']} Detailed report saved to bandit_report.txt in the project root.")
 
         except FileNotFoundError:
@@ -1585,14 +1587,14 @@ A comprehensive security toolkit for anonymity and WiFi auditing
                 self.config.anonsuite_root,
                 os.path.join(self.config.anonymity_module, "multitor", "multitor")
             ]
-            
+
             for file_path in critical_files:
                 if os.path.exists(file_path):
                     stat_info = os.stat(file_path)
                     # Basic permission check
                     if stat_info.st_uid != os.getuid() and os.getuid() != 0:
                         return False
-            
+
             return True
         except Exception:
             return False
@@ -1621,53 +1623,53 @@ A comprehensive security toolkit for anonymity and WiFi auditing
         print(f"\n{self._colorize('AnonSuite Configuration Wizard', 'primary')}")
         print("=" * 50)
         print("This wizard will help you set up AnonSuite for your system.\n")
-        
+
         # Step 1: System detection
         print(f"{VisualTokens.SYMBOLS['info']} Detecting system capabilities...")
         capabilities = self._detect_system_capabilities()
         self._display_capabilities(capabilities)
-        
+
         # Step 2: Basic configuration
         print(f"\n{self._colorize('Basic Configuration', 'accent')}")
-        
+
         # Log level
         log_level = input("Set log level (INFO/DEBUG/WARNING) [INFO]: ").upper() or "INFO"
         if log_level in ['INFO', 'DEBUG', 'WARNING', 'ERROR']:
             self.config.set('general.log_level', log_level)
-        
+
         # Data directory
         data_dir = input(f"Data directory [{self.config.get('general.data_dir')}]: ") or self.config.get('general.data_dir')
         self.config.set('general.data_dir', data_dir)
-        
+
         # Step 3: Anonymity configuration
         if capabilities.get('tor', False):
             print(f"\n{self._colorize('Anonymity Configuration', 'accent')}")
-            
+
             socks_port = input("Tor SOCKS port [9000]: ") or "9000"
             try:
                 self.config.set('anonymity.tor.socks_port', int(socks_port))
             except ValueError:
                 print("Invalid port, using default 9000")
                 self.config.set('anonymity.tor.socks_port', 9000)
-            
+
             control_port = input("Tor control port [9001]: ") or "9001"
             try:
                 self.config.set('anonymity.tor.control_port', int(control_port))
             except ValueError:
                 print("Invalid port, using default 9001")
                 self.config.set('anonymity.tor.control_port', 9001)
-        
+
         # Step 4: WiFi configuration
         if capabilities.get('wifi_available', False):
             print(f"\n{self._colorize('WiFi Configuration', 'accent')}")
-            
+
             scan_timeout = input("WiFi scan timeout in seconds [30]: ") or "30"
             try:
                 self.config.set('wifi.scanner.scan_timeout', int(scan_timeout))
             except ValueError:
                 print("Invalid timeout, using default 30")
                 self.config.set('wifi.scanner.scan_timeout', 30)
-        
+
         # Step 5: Save configuration
         print(f"\n{self._colorize('Saving Configuration', 'accent')}")
         try:
@@ -1675,25 +1677,25 @@ A comprehensive security toolkit for anonymity and WiFi auditing
             print(f"{VisualTokens.SYMBOLS['success']} Configuration saved successfully!")
         except Exception as e:
             print(f"{VisualTokens.SYMBOLS['error']} Failed to save configuration: {e}")
-        
+
         # Step 6: Next steps
         print(f"\n{self._colorize('Setup Complete!', 'success')}")
         print("Next steps:")
         print("1. Run health check: python src/anonsuite.py --health-check")
         print("2. Start using AnonSuite: python src/anonsuite.py")
         print("3. View documentation: docs/user-guide.md")
-    
+
     def _detect_system_capabilities(self) -> Dict[str, bool]:
         """Detect what functionality is available on this system"""
         capabilities = {}
-        
+
         # Check Python version
         capabilities['python_ok'] = sys.version_info >= (3, 8)
-        
+
         # Check system tools
         capabilities['tor'] = self._command_exists('tor')
         capabilities['privoxy'] = self._command_exists('privoxy')
-        
+
         # Check WiFi tools (platform-specific)
         if sys.platform == 'darwin':  # macOS
             capabilities['wifi_available'] = True  # macOS has built-in WiFi tools
@@ -1701,31 +1703,31 @@ A comprehensive security toolkit for anonymity and WiFi auditing
         else:  # Linux
             capabilities['wifi_available'] = self._command_exists('iwconfig')
             capabilities['wifi_type'] = 'Linux (wireless-tools)'
-        
+
         # Check directories
         capabilities['config_dir'] = os.path.exists(self.config.config_dir)
         capabilities['data_dir'] = os.path.exists(self.config.get('general.data_dir', ''))
-        
+
         return capabilities
-    
+
     def _display_capabilities(self, capabilities: Dict[str, bool]) -> None:
         """Display system capabilities to user"""
         print(f"\n{self._colorize('System Capabilities:', 'accent')}")
-        
+
         for capability, available in capabilities.items():
             if capability == 'wifi_type':
                 continue  # Skip this one, it's just metadata
-            
+
             status = VisualTokens.SYMBOLS['success'] if available else VisualTokens.SYMBOLS['error']
             status_text = "Available" if available else "Not Available"
-            
+
             if capability == 'wifi_available' and available:
                 wifi_type = capabilities.get('wifi_type', 'Unknown')
                 print(f"  {status} WiFi Tools: {status_text} ({wifi_type})")
             else:
                 capability_name = capability.replace('_', ' ').title()
                 print(f"  {status} {capability_name}: {status_text}")
-        
+
         # Show warnings for missing critical components
         if not capabilities.get('tor', False):
             print(f"\n{VisualTokens.SYMBOLS['warning']} Tor not found. Install with:")
@@ -1733,14 +1735,14 @@ A comprehensive security toolkit for anonymity and WiFi auditing
                 print("  brew install tor")
             else:
                 print("  sudo apt install tor")
-        
+
         if not capabilities.get('wifi_available', False):
             print(f"\n{VisualTokens.SYMBOLS['warning']} WiFi tools not found. Install with:")
             if sys.platform == 'darwin':
                 print("  WiFi tools are built into macOS")
             else:
                 print("  sudo apt install wireless-tools")
-    
+
     def _command_exists(self, command: str) -> bool:
         """Check if a command exists in the system PATH"""
         try:
@@ -1753,44 +1755,44 @@ A comprehensive security toolkit for anonymity and WiFi auditing
         """Check Python environment health"""
         try:
             import sys
-            
+
             # Check Python version
             if sys.version_info < (3, 8):
                 return {
                     'status': 'fail',
                     'message': f'Python {sys.version_info.major}.{sys.version_info.minor} is too old. Requires 3.8+'
                 }
-            
+
             # Check virtual environment
             in_venv = hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix)
-            
+
             if not in_venv:
                 return {
                     'status': 'warning',
                     'message': 'Not running in virtual environment. Recommended for isolation.'
                 }
-            
+
             return {
                 'status': 'pass',
                 'message': f'Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro} in virtual environment'
             }
-            
+
         except Exception as e:
             return {'status': 'error', 'message': f'Python check failed: {e}'}
-    
+
     def _check_system_dependencies(self) -> Dict[str, Any]:
         """Check system dependencies"""
         try:
             required_tools = ['tor', 'privoxy']
             optional_tools = ['iwconfig', 'iwlist'] if sys.platform != 'darwin' else ['airport']
-            
+
             missing_required = []
             missing_optional = []
-            
+
             for tool in required_tools:
                 if not self._command_exists(tool):
                     missing_required.append(tool)
-            
+
             for tool in optional_tools:
                 if not self._command_exists(tool) and tool != 'airport':
                     missing_optional.append(tool)
@@ -1798,7 +1800,7 @@ A comprehensive security toolkit for anonymity and WiFi auditing
                     airport_path = "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
                     if not os.path.exists(airport_path):
                         missing_optional.append(tool)
-            
+
             if missing_required:
                 return {
                     'status': 'fail',
@@ -1814,21 +1816,21 @@ A comprehensive security toolkit for anonymity and WiFi auditing
                     'status': 'pass',
                     'message': 'All required system dependencies available'
                 }
-                
+
         except Exception as e:
             return {'status': 'error', 'message': f'Dependency check failed: {e}'}
-    
+
     def _check_configuration_files(self) -> Dict[str, Any]:
         """Check configuration files"""
         try:
             config_file = self.config.config_file_path
-            
+
             if not os.path.exists(config_file):
                 return {
                     'status': 'warning',
                     'message': 'Configuration file not found. Run --config-wizard to create.'
                 }
-            
+
             # Try to load and validate configuration
             try:
                 issues = self.config.validate_config()
@@ -1852,10 +1854,10 @@ A comprehensive security toolkit for anonymity and WiFi auditing
                     'status': 'fail',
                     'message': f'Configuration validation failed: {e}'
                 }
-                
+
         except Exception as e:
             return {'status': 'error', 'message': f'Configuration check failed: {e}'}
-    
+
     def _check_directory_structure(self) -> Dict[str, Any]:
         """Check directory structure"""
         try:
@@ -1866,12 +1868,12 @@ A comprehensive security toolkit for anonymity and WiFi auditing
                 'plugins',
                 'log'
             ]
-            
+
             missing_dirs = []
             for dir_path in required_dirs:
                 if not os.path.exists(dir_path):
                     missing_dirs.append(dir_path)
-            
+
             if missing_dirs:
                 # Try to create missing directories
                 created_dirs = []
@@ -1881,7 +1883,7 @@ A comprehensive security toolkit for anonymity and WiFi auditing
                         created_dirs.append(dir_path)
                     except Exception:
                         pass
-                
+
                 if created_dirs:
                     return {
                         'status': 'pass',
@@ -1897,16 +1899,16 @@ A comprehensive security toolkit for anonymity and WiFi auditing
                     'status': 'pass',
                     'message': 'All required directories exist'
                 }
-                
+
         except Exception as e:
             return {'status': 'error', 'message': f'Directory check failed: {e}'}
-    
+
     def _check_network_connectivity(self) -> Dict[str, Any]:
         """Check network connectivity"""
         try:
             import socket
             import urllib.request
-            
+
             # Test basic DNS resolution
             try:
                 socket.gethostbyname('google.com')
@@ -1915,7 +1917,7 @@ A comprehensive security toolkit for anonymity and WiFi auditing
                     'status': 'fail',
                     'message': 'DNS resolution failed. Check network connection.'
                 }
-            
+
             # Test HTTP connectivity
             try:
                 urllib.request.urlopen('https://httpbin.org/ip', timeout=10)
@@ -1924,15 +1926,15 @@ A comprehensive security toolkit for anonymity and WiFi auditing
                     'status': 'warning',
                     'message': 'HTTP connectivity limited. May affect some features.'
                 }
-            
+
             return {
                 'status': 'pass',
                 'message': 'Network connectivity working'
             }
-            
+
         except Exception as e:
             return {'status': 'error', 'message': f'Network check failed: {e}'}
-    
+
     def _check_tor_availability(self) -> Dict[str, Any]:
         """Check Tor availability and configuration"""
         try:
@@ -1941,7 +1943,7 @@ A comprehensive security toolkit for anonymity and WiFi auditing
                     'status': 'fail',
                     'message': 'Tor not installed. Install with: brew install tor (macOS) or apt install tor (Linux)'
                 }
-            
+
             # Check if Tor is running
             try:
                 result = subprocess.run(['pgrep', 'tor'], capture_output=True, timeout=5)
@@ -1960,10 +1962,10 @@ A comprehensive security toolkit for anonymity and WiFi auditing
                     'status': 'warning',
                     'message': 'Tor installed but status unknown'
                 }
-                
+
         except Exception as e:
             return {'status': 'error', 'message': f'Tor check failed: {e}'}
-    
+
     def _check_wifi_tools(self) -> Dict[str, Any]:
         """Check WiFi tools availability"""
         try:
@@ -1990,32 +1992,32 @@ A comprehensive security toolkit for anonymity and WiFi auditing
                         'status': 'fail',
                         'message': 'WiFi tools missing. Install with: sudo apt install wireless-tools'
                     }
-                    
+
         except Exception as e:
             return {'status': 'error', 'message': f'WiFi tools check failed: {e}'}
-    
+
     def _check_plugin_system(self) -> Dict[str, Any]:
         """Check plugin system"""
         try:
             plugins_dir = self.config.get('plugins.directory', 'plugins')
-            
+
             if not os.path.exists(plugins_dir):
                 return {
                     'status': 'warning',
                     'message': f'Plugin directory not found: {plugins_dir}'
                 }
-            
+
             plugin_files = [f for f in os.listdir(plugins_dir) if f.endswith('.py') and not f.startswith('__')]
-            
+
             if not plugin_files:
                 return {
                     'status': 'warning',
                     'message': 'No plugin files found'
                 }
-            
+
             # Try to load plugins
             loaded_plugins = len(self.plugin_manager.loaded_plugins)
-            
+
             if loaded_plugins == 0:
                 return {
                     'status': 'warning',
@@ -2026,14 +2028,14 @@ A comprehensive security toolkit for anonymity and WiFi auditing
                     'status': 'pass',
                     'message': f'{loaded_plugins} plugins loaded successfully'
                 }
-                
+
         except Exception as e:
             return {'status': 'error', 'message': f'Plugin system check failed: {e}'}
-    
+
     def _add_health_recommendations(self, health_results: Dict[str, Any]) -> None:
         """Add recommendations based on health check results"""
         recommendations = []
-        
+
         # Check for common issues and add recommendations
         for check_name, result in health_results['checks'].items():
             if result['status'] == 'fail':
@@ -2051,12 +2053,12 @@ A comprehensive security toolkit for anonymity and WiFi auditing
                 elif 'WiFi' in check_name:
                     if sys.platform != 'darwin':
                         recommendations.append("Install WiFi tools: sudo apt install wireless-tools aircrack-ng")
-        
+
         # Add general recommendations
         if health_results['overall_status'] in ['poor', 'fair']:
             recommendations.append("Review troubleshooting guide: docs/troubleshooting.md")
             recommendations.append("Consider running installation script: ./install.sh")
-        
+
         health_results['recommendations'] = recommendations[:5]  # Limit to top 5
 
     def _get_user_input(self, prompt: str = "Choice", valid_options: List[str] = None) -> str:
@@ -2065,54 +2067,54 @@ A comprehensive security toolkit for anonymity and WiFi auditing
             try:
                 # Display prompt with visual styling
                 user_input = input(f"{VisualTokens.COLORS['accent']}{prompt}{VisualTokens.COLORS['reset']}: ").strip()
-                
+
                 # Handle empty input
                 if not user_input:
                     if valid_options and '0' in valid_options:
                         return '0'  # Default to back/exit
                     continue
-                
+
                 # Validate input if options provided
                 if valid_options and user_input not in valid_options:
                     print(f"{VisualTokens.SYMBOLS['warning']} Invalid choice. Please select from: {', '.join(valid_options)}")
                     continue
-                
+
                 return user_input
-                
+
             except EOFError:
                 # Handle Ctrl+D gracefully
                 print(f"\n{VisualTokens.SYMBOLS['info']} Detected EOF. Exiting gracefully...")
                 return '0'
-                
+
             except KeyboardInterrupt:
                 # Handle Ctrl+C gracefully
                 print(f"\n{VisualTokens.SYMBOLS['info']} Operation cancelled by user. Returning to main menu...")
                 return '0'
-                
+
             except Exception as e:
                 # Handle any other input errors
                 print(f"{VisualTokens.SYMBOLS['error']} Input error: {e}")
                 print("Please try again or press Ctrl+C to exit.")
                 continue
-    
+
     def _display_menu_with_context(self, title: str, options: List[tuple], show_help: bool = True) -> str:
         """Display menu with context and help information"""
         print(f"\n{VisualTokens.COLORS['secondary']}┌─{VisualTokens.COLORS['reset']} {VisualTokens.COLORS['bold']}{title}{VisualTokens.COLORS['reset']} {VisualTokens.COLORS['secondary']}{'─' * (50 - len(title))}{VisualTokens.COLORS['reset']}")
-        
+
         valid_choices = []
         for option_key, option_text, option_help in options:
             print(f"{VisualTokens.COLORS['secondary']}│{VisualTokens.COLORS['reset']} {VisualTokens.COLORS['accent']}{option_key}.{VisualTokens.COLORS['reset']} {option_text}")
             if option_help and show_help:
                 print(f"{VisualTokens.COLORS['secondary']}│{VisualTokens.COLORS['reset']}   {VisualTokens.COLORS['muted']}{option_help}{VisualTokens.COLORS['reset']}")
             valid_choices.append(option_key)
-        
+
         print(f"{VisualTokens.COLORS['secondary']}└─{'─' * 50}{VisualTokens.COLORS['reset']}")
-        
+
         if show_help:
             print(f"{VisualTokens.COLORS['muted']}💡 Tip: Press '0' to go back, 'h' for help, or Ctrl+C to exit{VisualTokens.COLORS['reset']}")
-        
+
         return self._get_user_input("Choice", valid_choices + ['h', 'help'])
-    
+
     def _show_contextual_help(self, context: str) -> None:
         """Show contextual help based on current menu context"""
         help_content = {
@@ -2120,7 +2122,7 @@ A comprehensive security toolkit for anonymity and WiFi auditing
                 "AnonSuite Main Menu Help",
                 "• Anonymity: Configure and manage Tor/Proxy services",
                 "• WiFi Auditing: Scan networks and test security",
-                "• Configuration: Manage profiles and settings", 
+                "• Configuration: Manage profiles and settings",
                 "• System Status: Monitor health and performance",
                 "• Plugins: Extend functionality with custom tools",
                 "• Help: Access documentation and tutorials"
@@ -2134,7 +2136,7 @@ A comprehensive security toolkit for anonymity and WiFi auditing
                 "• Stop Services: Safely shutdown anonymity tools"
             ],
             "wifi": [
-                "WiFi Auditing Help", 
+                "WiFi Auditing Help",
                 "• Network Scan: Discover nearby WiFi networks",
                 "• Security Analysis: Assess network vulnerabilities",
                 "• WPS Testing: Test WPS PIN vulnerabilities",
@@ -2150,15 +2152,15 @@ A comprehensive security toolkit for anonymity and WiFi auditing
                 "• Security Audit: Run automated security scans"
             ]
         }
-        
+
         content = help_content.get(context, ["Help not available for this section"])
-        
+
         print(f"\n{VisualTokens.COLORS['primary']}📚 {content[0]}{VisualTokens.COLORS['reset']}")
         print("=" * 50)
         for line in content[1:]:
             print(f"{VisualTokens.COLORS['muted']}{line}{VisualTokens.COLORS['reset']}")
         print()
-        
+
         input(f"{VisualTokens.COLORS['accent']}Press Enter to continue...{VisualTokens.COLORS['reset']}")
 
     def main_menu(self) -> None:
@@ -2215,46 +2217,46 @@ Examples:
 For more information, visit: https://github.com/morningstarxcdcode/AnonSuite
         """
     )
-    
+
     # Version and basic info
     parser.add_argument('--version', action='version', version=f'AnonSuite {__version__}')
     parser.add_argument('--verbose', '-v', action='store_true', help='Enable verbose output')
     parser.add_argument('--debug', action='store_true', help='Enable debug mode')
     parser.add_argument('--profile', type=str, help='Use specific configuration profile')
-    
+
     # System operations
     parser.add_argument('--health-check', action='store_true', help='Perform comprehensive system health check')
     parser.add_argument('--config-wizard', action='store_true', help='Run interactive configuration wizard')
     parser.add_argument('--security-audit', action='store_true', help='Run security audit with Bandit')
-    
+
     # Anonymity operations
     parser.add_argument('--start-anonymity', action='store_true', help='Start Tor anonymity services')
     parser.add_argument('--stop-anonymity', action='store_true', help='Stop Tor anonymity services')
     parser.add_argument('--anonymity-status', action='store_true', help='Check anonymity services status')
     parser.add_argument('--new-circuit', action='store_true', help='Request new Tor circuit')
-    
+
     # WiFi operations
     parser.add_argument('--wifi-scan', action='store_true', help='Scan for WiFi networks')
     parser.add_argument('--wifi-interface', type=str, help='Specify WiFi interface for operations')
     parser.add_argument('--wps-attack', type=str, metavar='BSSID', help='Launch WPS attack on target BSSID')
     parser.add_argument('--start-ap', type=str, metavar='SSID', help='Start rogue access point with specified SSID')
     parser.add_argument('--stop-ap', action='store_true', help='Stop running access point')
-    
+
     # Configuration operations
     parser.add_argument('--list-profiles', action='store_true', help='List available configuration profiles')
     parser.add_argument('--create-profile', type=str, metavar='NAME', help='Create new configuration profile')
     parser.add_argument('--export-profile', nargs=2, metavar=('PROFILE', 'PATH'), help='Export profile to file')
     parser.add_argument('--import-profile', nargs=2, metavar=('NAME', 'PATH'), help='Import profile from file')
-    
+
     # Plugin operations
     parser.add_argument('--list-plugins', action='store_true', help='List available plugins')
     parser.add_argument('--run-plugin', type=str, metavar='NAME', help='Run specific plugin')
-    
+
     # Output options
     parser.add_argument('--output', '-o', type=str, help='Output file for results')
     parser.add_argument('--format', choices=['json', 'text', 'csv'], default='text', help='Output format')
     parser.add_argument('--no-color', action='store_true', help='Disable colored output')
-    
+
     # Educational and demo features
     parser.add_argument('--tutorial', action='store_true',
                        help='Start interactive learning tutorial')
@@ -2262,7 +2264,7 @@ For more information, visit: https://github.com/morningstarxcdcode/AnonSuite
                        help='Run quick start demonstration')
     parser.add_argument('--explain', metavar='CONCEPT',
                        help='Explain security concepts (wifi, tor, anonymity, etc.)')
-    
+
     # Advanced features for professionals
     parser.add_argument('--batch-mode', action='store_true',
                        help='Run in batch mode for automation')
@@ -2274,85 +2276,85 @@ For more information, visit: https://github.com/morningstarxcdcode/AnonSuite
     try:
         # Initialize CLI with configuration
         cli = AnonSuiteCLI()
-        
+
         # Handle profile selection
         if args.profile:
             if not cli.config.load_config(args.profile):
                 print(f"{VisualTokens.COLORS['error']}Failed to load profile: {args.profile}{VisualTokens.COLORS['reset']}")
                 sys.exit(1)
-        
+
         # Handle debug/verbose modes
         if args.debug:
             logging.basicConfig(level=logging.DEBUG)
             cli.config.set('general.debug', True)
         elif args.verbose:
             logging.basicConfig(level=logging.INFO)
-        
+
         # Handle color output
         if args.no_color:
             cli.config.set('ui.colors', False)
-        
+
         # Educational features
         if args.tutorial:
             cli._run_tutorial_mode()
             return
-        
+
         if args.demo:
             cli._run_quick_start_demo()
             return
-        
+
         if args.explain:
             cli._explain_concept(args.explain)
             return
-        
+
         # Professional features
         if args.batch_mode:
             cli._run_batch_mode()
             return
-        
+
         if args.generate_report:
             cli._generate_security_report(args.generate_report)
             return
-        
+
         # Process command-line operations
         if args.health_check:
             result = cli._run_health_check()
             if args.output:
                 _save_output(result, args.output, args.format)
             sys.exit(0 if result.get('status') == 'success' else 1)
-        
+
         elif args.config_wizard:
             cli._run_configuration_wizard()
             sys.exit(0)
-        
+
         elif args.security_audit:
             result = cli._run_security_audit()
             if args.output:
                 _save_output(result, args.output, args.format)
             sys.exit(0)
-        
+
         elif args.start_anonymity:
             result = cli._start_anonymity_services()
             print(f"Anonymity services: {result.get('message', 'Started')}")
             sys.exit(0 if result.get('status') == 'success' else 1)
-        
+
         elif args.stop_anonymity:
             result = cli._stop_anonymity_services()
             print(f"Anonymity services: {result.get('message', 'Stopped')}")
             sys.exit(0)
-        
+
         elif args.anonymity_status:
             result = cli._check_anonymity_status()
             print(f"Anonymity status: {result.get('message', 'Unknown')}")
             if args.output:
                 _save_output(result, args.output, args.format)
             sys.exit(0)
-        
+
         elif args.new_circuit:
             result = cli._request_new_circuit()
             print(f"New circuit: {result.get('message', 'Requested')}")
             sys.exit(0 if result.get('status') == 'success' else 1)
-        
+
         elif args.wifi_scan:
             result = cli._scan_wifi_networks(args.wifi_interface)
             if args.output:
@@ -2360,7 +2362,7 @@ For more information, visit: https://github.com/morningstarxcdcode/AnonSuite
             else:
                 _display_wifi_results(result)
             sys.exit(0)
-        
+
         elif args.wps_attack:
             if not args.wifi_interface:
                 print(f"{VisualTokens.COLORS['error']}WiFi interface required for WPS attack{VisualTokens.COLORS['reset']}")
@@ -2369,17 +2371,17 @@ For more information, visit: https://github.com/morningstarxcdcode/AnonSuite
             if args.output:
                 _save_output(result, args.output, args.format)
             sys.exit(0 if result.get('status') == 'success' else 1)
-        
+
         elif args.start_ap:
             result = cli._start_rogue_ap(args.start_ap, args.wifi_interface)
             print(f"Rogue AP: {result.get('message', 'Started')}")
             sys.exit(0 if result.get('status') == 'success' else 1)
-        
+
         elif args.stop_ap:
             result = cli._stop_rogue_ap()
             print(f"Rogue AP: {result.get('message', 'Stopped')}")
             sys.exit(0)
-        
+
         elif args.list_profiles:
             profiles = cli.config.list_profiles()
             print("Available profiles:")
@@ -2387,35 +2389,35 @@ For more information, visit: https://github.com/morningstarxcdcode/AnonSuite
                 marker = " (current)" if profile == cli.config.current_profile else ""
                 print(f"  - {profile}{marker}")
             sys.exit(0)
-        
+
         elif args.create_profile:
             success = cli.config.create_profile(args.create_profile)
             print(f"Profile creation: {'Success' if success else 'Failed'}")
             sys.exit(0 if success else 1)
-        
+
         elif args.export_profile:
             profile_name, export_path = args.export_profile
             success = cli.config.export_profile(profile_name, export_path)
             print(f"Profile export: {'Success' if success else 'Failed'}")
             sys.exit(0 if success else 1)
-        
+
         elif args.import_profile:
             profile_name, import_path = args.import_profile
             success = cli.config.import_profile(profile_name, import_path)
             print(f"Profile import: {'Success' if success else 'Failed'}")
             sys.exit(0 if success else 1)
-        
+
         elif args.list_plugins:
             plugins = list(cli.plugin_manager.loaded_plugins.keys())
             print(f"Available plugins ({len(plugins)}):")
             for plugin in plugins:
                 print(f"  - {plugin}")
             sys.exit(0)
-        
+
         elif args.run_plugin:
             cli.plugin_manager.run_plugin_by_name(args.run_plugin)
             sys.exit(0)
-        
+
         else:
             # No command-line arguments, start interactive menu
             cli.main_menu()
@@ -2463,16 +2465,16 @@ def _display_wifi_results(result: dict):
         print("-" * 80)
         print(f"{'SSID':<20} {'BSSID':<18} {'CH':<3} {'Signal':<7} {'Encryption':<15}")
         print("-" * 80)
-        
+
         for network in networks[:20]:  # Show first 20
             ssid = network.get('ssid', 'Hidden')[:19]
             bssid = network.get('bssid', 'Unknown')
             channel = str(network.get('channel', '?'))
             signal = f"{network.get('signal_level', 0)}dBm"
             encryption = network.get('encryption', 'Unknown')[:14]
-            
+
             print(f"{ssid:<20} {bssid:<18} {channel:<3} {signal:<7} {encryption:<15}")
-        
+
         if len(networks) > 20:
             print(f"... and {len(networks) - 20} more networks")
     else:
@@ -2481,12 +2483,12 @@ def _display_wifi_results(result: dict):
 # Add helper methods to AnonSuiteCLI class for command-line operations
 def _add_cli_helper_methods():
     """Add helper methods to AnonSuiteCLI for command-line operations"""
-    
+
     def _run_health_check(self) -> Dict[str, Any]:
         """Comprehensive system health check with timeout protection"""
         print(f"\n{self._colorize('AnonSuite Health Check', 'primary')}")
         print("=" * 50)
-        
+
         health_results = {
             "overall_status": "unknown",
             "checks": {},
@@ -2494,7 +2496,7 @@ def _add_cli_helper_methods():
             "errors": [],
             "recommendations": []
         }
-        
+
         # Define health checks with timeouts
         checks = [
             ("Python Environment", self._check_python_environment, 5),
@@ -2506,27 +2508,27 @@ def _add_cli_helper_methods():
             ("WiFi Tools", self._check_wifi_tools, 10),
             ("Plugin System", self._check_plugin_system, 5)
         ]
-        
+
         passed_checks = 0
         total_checks = len(checks)
-        
+
         for check_name, check_func, timeout in checks:
             print(f"\n{VisualTokens.SYMBOLS['info']} Checking {check_name}...")
-            
+
             try:
                 # Run check with timeout
                 import signal
-                
+
                 def timeout_handler(signum, frame):
                     raise TimeoutError(f"Health check timed out after {timeout} seconds")
-                
+
                 signal.signal(signal.SIGALRM, timeout_handler)
                 signal.alarm(timeout)
-                
+
                 try:
                     result = check_func()
                     signal.alarm(0)  # Cancel timeout
-                    
+
                     if result.get('status') == 'pass':
                         print(f"  {VisualTokens.SYMBOLS['success']} {check_name}: PASS")
                         if result.get('message'):
@@ -2541,29 +2543,29 @@ def _add_cli_helper_methods():
                         print(f"  {VisualTokens.SYMBOLS['error']} {check_name}: FAIL")
                         print(f"    {result.get('message', 'Check failed')}")
                         health_results['errors'].append(f"{check_name}: {result.get('message')}")
-                    
+
                     health_results['checks'][check_name] = result
-                    
+
                 except TimeoutError as e:
                     signal.alarm(0)
                     print(f"  {VisualTokens.SYMBOLS['error']} {check_name}: TIMEOUT")
                     print(f"    {str(e)}")
                     health_results['errors'].append(f"{check_name}: Timed out after {timeout}s")
                     health_results['checks'][check_name] = {'status': 'timeout', 'message': str(e)}
-                
+
             except Exception as e:
                 signal.alarm(0)
                 print(f"  {VisualTokens.SYMBOLS['error']} {check_name}: ERROR")
                 print(f"    {str(e)}")
                 health_results['errors'].append(f"{check_name}: {str(e)}")
                 health_results['checks'][check_name] = {'status': 'error', 'message': str(e)}
-        
+
         # Calculate overall health score
         health_score = (passed_checks / total_checks) * 100
-        
+
         print(f"\n{self._colorize('Health Check Summary', 'accent')}")
         print("-" * 30)
-        
+
         if health_score >= 90:
             health_results['overall_status'] = 'excellent'
             print(f"{VisualTokens.SYMBOLS['success']} Overall Health: EXCELLENT ({health_score:.1f}%)")
@@ -2576,72 +2578,72 @@ def _add_cli_helper_methods():
         else:
             health_results['overall_status'] = 'poor'
             print(f"{VisualTokens.SYMBOLS['error']} Overall Health: POOR ({health_score:.1f}%)")
-        
+
         # Show recommendations
         if health_results['errors']:
             print(f"\n{self._colorize('Critical Issues:', 'error')}")
             for error in health_results['errors'][:3]:  # Show top 3
                 print(f"  • {error}")
-        
+
         if health_results['warnings']:
             print(f"\n{self._colorize('Warnings:', 'warning')}")
             for warning in health_results['warnings'][:3]:  # Show top 3
                 print(f"  • {warning}")
-        
+
         # Add recommendations based on results
         self._add_health_recommendations(health_results)
-        
+
         if health_results['recommendations']:
             print(f"\n{self._colorize('Recommendations:', 'accent')}")
             for rec in health_results['recommendations'][:3]:  # Show top 3
                 print(f"  • {rec}")
-        
-        print(f"\nFor detailed troubleshooting, see: docs/troubleshooting.md")
-        
+
+        print("\nFor detailed troubleshooting, see: docs/troubleshooting.md")
+
         return health_results
-    
+
     def _check_python_environment(self) -> Dict[str, Any]:
         """Check Python environment health"""
         try:
             import sys
-            
+
             # Check Python version
             if sys.version_info < (3, 8):
                 return {
                     'status': 'fail',
                     'message': f'Python {sys.version_info.major}.{sys.version_info.minor} is too old. Requires 3.8+'
                 }
-            
+
             # Check virtual environment
             in_venv = hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix)
-            
+
             if not in_venv:
                 return {
                     'status': 'warning',
                     'message': 'Not running in virtual environment. Recommended for isolation.'
                 }
-            
+
             return {
                 'status': 'pass',
                 'message': f'Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro} in virtual environment'
             }
-            
+
         except Exception as e:
             return {'status': 'error', 'message': f'Python check failed: {e}'}
-    
+
     def _check_system_dependencies(self) -> Dict[str, Any]:
         """Check system dependencies"""
         try:
             required_tools = ['tor', 'privoxy']
             optional_tools = ['iwconfig', 'iwlist'] if sys.platform != 'darwin' else ['airport']
-            
+
             missing_required = []
             missing_optional = []
-            
+
             for tool in required_tools:
                 if not self._command_exists(tool):
                     missing_required.append(tool)
-            
+
             for tool in optional_tools:
                 if not self._command_exists(tool) and tool != 'airport':
                     missing_optional.append(tool)
@@ -2649,7 +2651,7 @@ def _add_cli_helper_methods():
                     airport_path = "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
                     if not os.path.exists(airport_path):
                         missing_optional.append(tool)
-            
+
             if missing_required:
                 return {
                     'status': 'fail',
@@ -2665,21 +2667,21 @@ def _add_cli_helper_methods():
                     'status': 'pass',
                     'message': 'All required system dependencies available'
                 }
-                
+
         except Exception as e:
             return {'status': 'error', 'message': f'Dependency check failed: {e}'}
-    
+
     def _check_configuration_files(self) -> Dict[str, Any]:
         """Check configuration files"""
         try:
             config_file = self.config.config_file_path
-            
+
             if not os.path.exists(config_file):
                 return {
                     'status': 'warning',
                     'message': 'Configuration file not found. Run --config-wizard to create.'
                 }
-            
+
             # Try to load and validate configuration
             try:
                 issues = self.config.validate_config()
@@ -2703,10 +2705,10 @@ def _add_cli_helper_methods():
                     'status': 'fail',
                     'message': f'Configuration validation failed: {e}'
                 }
-                
+
         except Exception as e:
             return {'status': 'error', 'message': f'Configuration check failed: {e}'}
-    
+
     def _check_directory_structure(self) -> Dict[str, Any]:
         """Check directory structure"""
         try:
@@ -2717,12 +2719,12 @@ def _add_cli_helper_methods():
                 'plugins',
                 'log'
             ]
-            
+
             missing_dirs = []
             for dir_path in required_dirs:
                 if not os.path.exists(dir_path):
                     missing_dirs.append(dir_path)
-            
+
             if missing_dirs:
                 # Try to create missing directories
                 created_dirs = []
@@ -2732,7 +2734,7 @@ def _add_cli_helper_methods():
                         created_dirs.append(dir_path)
                     except Exception:
                         pass
-                
+
                 if created_dirs:
                     return {
                         'status': 'pass',
@@ -2748,16 +2750,16 @@ def _add_cli_helper_methods():
                     'status': 'pass',
                     'message': 'All required directories exist'
                 }
-                
+
         except Exception as e:
             return {'status': 'error', 'message': f'Directory check failed: {e}'}
-    
+
     def _check_network_connectivity(self) -> Dict[str, Any]:
         """Check network connectivity"""
         try:
             import socket
             import urllib.request
-            
+
             # Test basic DNS resolution
             try:
                 socket.gethostbyname('google.com')
@@ -2766,7 +2768,7 @@ def _add_cli_helper_methods():
                     'status': 'fail',
                     'message': 'DNS resolution failed. Check network connection.'
                 }
-            
+
             # Test HTTP connectivity
             try:
                 urllib.request.urlopen('https://httpbin.org/ip', timeout=10)
@@ -2775,15 +2777,15 @@ def _add_cli_helper_methods():
                     'status': 'warning',
                     'message': 'HTTP connectivity limited. May affect some features.'
                 }
-            
+
             return {
                 'status': 'pass',
                 'message': 'Network connectivity working'
             }
-            
+
         except Exception as e:
             return {'status': 'error', 'message': f'Network check failed: {e}'}
-    
+
     def _check_tor_availability(self) -> Dict[str, Any]:
         """Check Tor availability and configuration"""
         try:
@@ -2792,7 +2794,7 @@ def _add_cli_helper_methods():
                     'status': 'fail',
                     'message': 'Tor not installed. Install with: brew install tor (macOS) or apt install tor (Linux)'
                 }
-            
+
             # Check if Tor is running
             try:
                 result = subprocess.run(['pgrep', 'tor'], capture_output=True, timeout=5)
@@ -2811,10 +2813,10 @@ def _add_cli_helper_methods():
                     'status': 'warning',
                     'message': 'Tor installed but status unknown'
                 }
-                
+
         except Exception as e:
             return {'status': 'error', 'message': f'Tor check failed: {e}'}
-    
+
     def _check_wifi_tools(self) -> Dict[str, Any]:
         """Check WiFi tools availability"""
         try:
@@ -2841,32 +2843,32 @@ def _add_cli_helper_methods():
                         'status': 'fail',
                         'message': 'WiFi tools missing. Install with: sudo apt install wireless-tools'
                     }
-                    
+
         except Exception as e:
             return {'status': 'error', 'message': f'WiFi tools check failed: {e}'}
-    
+
     def _check_plugin_system(self) -> Dict[str, Any]:
         """Check plugin system"""
         try:
             plugins_dir = self.config.get('plugins.directory', 'plugins')
-            
+
             if not os.path.exists(plugins_dir):
                 return {
                     'status': 'warning',
                     'message': f'Plugin directory not found: {plugins_dir}'
                 }
-            
+
             plugin_files = [f for f in os.listdir(plugins_dir) if f.endswith('.py') and not f.startswith('__')]
-            
+
             if not plugin_files:
                 return {
                     'status': 'warning',
                     'message': 'No plugin files found'
                 }
-            
+
             # Try to load plugins
             loaded_plugins = len(self.plugin_manager.loaded_plugins)
-            
+
             if loaded_plugins == 0:
                 return {
                     'status': 'warning',
@@ -2877,14 +2879,14 @@ def _add_cli_helper_methods():
                     'status': 'pass',
                     'message': f'{loaded_plugins} plugins loaded successfully'
                 }
-                
+
         except Exception as e:
             return {'status': 'error', 'message': f'Plugin system check failed: {e}'}
-    
+
     def _add_health_recommendations(self, health_results: Dict[str, Any]) -> None:
         """Add recommendations based on health check results"""
         recommendations = []
-        
+
         # Check for common issues and add recommendations
         for check_name, result in health_results['checks'].items():
             if result['status'] == 'fail':
@@ -2902,34 +2904,34 @@ def _add_cli_helper_methods():
                 elif 'WiFi' in check_name:
                     if sys.platform != 'darwin':
                         recommendations.append("Install WiFi tools: sudo apt install wireless-tools aircrack-ng")
-        
+
         # Add general recommendations
         if health_results['overall_status'] in ['poor', 'fair']:
             recommendations.append("Review troubleshooting guide: docs/troubleshooting.md")
             recommendations.append("Consider running installation script: ./install.sh")
-        
+
         health_results['recommendations'] = recommendations[:5]  # Limit to top 5
-    
+
     def _start_anonymity_services(self) -> dict:
         """Start anonymity services"""
         # Implementation would start Tor and Privoxy
         return {"status": "success", "message": "Anonymity services started"}
-    
+
     def _stop_anonymity_services(self) -> dict:
         """Stop anonymity services"""
         # Implementation would stop Tor and Privoxy
         return {"status": "success", "message": "Anonymity services stopped"}
-    
+
     def _check_anonymity_status(self) -> dict:
         """Check anonymity services status"""
         # Implementation would check Tor and Privoxy status
         return {"status": "success", "message": "Services running"}
-    
+
     def _request_new_circuit(self) -> dict:
         """Request new Tor circuit"""
         # Implementation would request new circuit via Tor control port
         return {"status": "success", "message": "New circuit requested"}
-    
+
     def _scan_wifi_networks(self, interface: str = None) -> dict:
         """Scan for WiFi networks"""
         try:
@@ -2939,12 +2941,12 @@ def _add_cli_helper_methods():
             return {"status": "success", "networks": networks, "count": len(networks)}
         except Exception as e:
             return {"status": "error", "message": str(e)}
-    
+
     def _launch_wps_attack(self, bssid: str, interface: str) -> dict:
         """Launch WPS attack"""
         # Implementation would use pixiewps wrapper
         return {"status": "error", "message": "WPS attack requires handshake data"}
-    
+
     def _start_rogue_ap(self, ssid: str, interface: str = None) -> dict:
         """Start rogue access point"""
         try:
@@ -2954,7 +2956,7 @@ def _add_cli_helper_methods():
             return result
         except Exception as e:
             return {"status": "error", "message": str(e)}
-    
+
     def _stop_rogue_ap(self) -> dict:
         """Stop rogue access point"""
         try:
@@ -2964,12 +2966,12 @@ def _add_cli_helper_methods():
             return result
         except Exception as e:
             return {"status": "error", "message": str(e)}
-    
+
     def _run_security_audit(self) -> dict:
         """Run security audit with Bandit"""
         # Implementation would run Bandit security scan
         return {"status": "success", "message": "Security audit completed"}
-    
+
     # Add methods to AnonSuiteCLI class
     AnonSuiteCLI._run_health_check = _run_health_check
     AnonSuiteCLI._start_anonymity_services = _start_anonymity_services
