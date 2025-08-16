@@ -113,17 +113,8 @@ jobs:
         cd ${{ github.workspace }}
         python -m anonsuite --version || echo "Command not found, continuing"
         python -m anonsuite --help || echo "Command not found, continuing"
-        # Modified health check with better error handling
-        python -c "
-import sys
-try:
-    import anonsuite
-    print('✓ Package health check passed')
-except Exception as e:
-    print(f'⚠ Package health check warning: {e}')
-    # Don't fail the build for import issues
-    sys.exit(0)
-"
+        # Health check with better error handling
+        python -c "import sys; try: import anonsuite; print('✓ Package health check passed'); except Exception as e: print(f'⚠ Package health check warning: {e}'); sys.exit(0)"
     
     - name: Upload test artifacts
       if: always()
@@ -143,7 +134,7 @@ except Exception as e:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-
+        python-version: '3.11'  # Added missing Python version
     
     - name: Install dependencies
       run: |
@@ -162,12 +153,9 @@ except Exception as e:
     
     - name: Run Semgrep security scan
       run: |
-        if command -v semgrep &> /dev/null; then
-          semgrep --config=auto src/ --json --output=semgrep-results.json || true
-        else
-          echo "Semgrep not available, skipping scan"
-          echo '{}' > semgrep-results.json
-        fi
+        python -c "import shutil; exit(0 if shutil.which('semgrep') else 1)" && \
+        semgrep --config=auto src/ --json --output=semgrep-results.json || \
+        (echo "Semgrep not available or failed, creating empty results file" && echo '{}' > semgrep-results.json)
     
     - name: Upload security scan results
       uses: actions/upload-artifact@v4
@@ -189,7 +177,7 @@ except Exception as e:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-
+        python-version: '3.11'  # Added missing Python version
     
     - name: Install build dependencies
       run: |
