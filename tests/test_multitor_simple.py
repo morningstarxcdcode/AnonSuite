@@ -6,15 +6,23 @@ import time
 import pytest
 import requests
 
-# Define absolute path to multitor script
-MULTITOR_SCRIPT = os.path.expanduser("~/Desktop/AnonSuite/src/anonymity/multitor/multitor")
-MULTITOR_LOG = os.path.expanduser("~/Desktop/AnonSuite/src/anonymity/multitor/multitor.log")
+# Define dynamic path to multitor script
+import sys
+from pathlib import Path
+
+# Get project root directory
+PROJECT_ROOT = Path(__file__).parent.parent
+MULTITOR_SCRIPT = str(PROJECT_ROOT / "src" / "anonymity" / "multitor" / "multitor")
+MULTITOR_LOG = str(PROJECT_ROOT / "src" / "anonymity" / "multitor" / "multitor.log")
 
 # Test parameters
 TEST_USER = "morningstar"
 SOCKS_PORT = 9000
 CONTROL_PORT = 9001
 PRIVOXY_PORT = 8119
+
+# Check if we're running in CI
+IS_CI = os.getenv('CI') == 'true' or os.getenv('GITHUB_ACTIONS') == 'true'
 
 def check_port_listening(port, host='127.0.0.1'):
     """Checks if a given port is listening."""
@@ -29,6 +37,7 @@ def check_port_listening(port, host='127.0.0.1'):
     finally:
         s.close()
 
+@pytest.mark.skipif(IS_CI, reason="Skipping system tests in CI environment")
 def test_multitor_startup():
     """
     Test that multitor can start Tor and Privoxy processes successfully.
@@ -84,6 +93,7 @@ def test_multitor_startup():
     assert "Tor process started successfully" in log_content, "Tor startup not confirmed in logs"
     assert "privoxy started successfully" in log_content, "Privoxy startup not confirmed in logs"
 
+@pytest.mark.skipif(IS_CI, reason="Skipping network tests in CI environment")
 def test_basic_socks_connection():
     """
     Test basic SOCKS proxy functionality without external network calls.

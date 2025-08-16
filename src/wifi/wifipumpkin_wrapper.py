@@ -20,10 +20,7 @@ class WiFiPumpkinWrapper:
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.wifipumpkin_path = "/Users/morningstar/Desktop/AnonSuite/src/wifi/wifipumpkin3"
-        self.python_cmd = "python3"
-        self.results_dir = "/Users/morningstar/Desktop/AnonSuite/run/wifipumpkin_results"
-        self.config_dir = "/Users/morningstar/Desktop/AnonSuite/config/wifipumpkin"
+
         self.process = None
         self._ensure_directories()
 

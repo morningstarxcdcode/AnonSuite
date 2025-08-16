@@ -19,11 +19,15 @@ class ConfigManager:
 
         # Set default config directory
         if config_dir is None:
-            self.config_dir = "/Users/morningstar/Desktop/AnonSuite/config"
+            # Try to find project root from current file location
+            current_file = os.path.abspath(__file__)
+            project_root = os.path.dirname(os.path.dirname(current_file))  # Go up two levels from src/
+            self.config_dir = os.path.join(project_root, "config")
         else:
             self.config_dir = config_dir
 
         self.config_file = os.path.join(self.config_dir, "anonsuite.conf")
+        self.config_file_path = self.config_file  # Alias for compatibility with health check
         self.profiles_dir = os.path.join(self.config_dir, "profiles")
         self.current_profile = "default"
 
@@ -37,57 +41,56 @@ class ConfigManager:
 
     def _get_default_config(self) -> Dict[str, Any]:
         """Get default configuration values"""
+        # Determine project root dynamically
+        current_file = os.path.abspath(__file__)
+        project_root = os.path.dirname(os.path.dirname(current_file))  # Go up two levels from src/
+        
         return {
             "general": {
                 "version": "2.0.0",
                 "debug": False,
                 "log_level": "INFO",
-                "log_file": "/Users/morningstar/Desktop/AnonSuite/log/anonsuite.log",
-                "data_dir": "/Users/morningstar/Desktop/AnonSuite/run",
-                "temp_dir": "/tmp/anonsuite"
+
             },
             "anonymity": {
                 "tor": {
                     "socks_port": 9000,
                     "control_port": 9001,
-                    "data_directory": "/Users/morningstar/Desktop/AnonSuite/src/anonymity/multitor/tor_9000",
-                    "config_file": "/Users/morningstar/Desktop/AnonSuite/src/anonymity/multitor/tor_9000/torrc",
-                    "log_file": "/Users/morningstar/Desktop/AnonSuite/src/anonymity/multitor/tor_9000/tor.log",
+                    "data_directory": os.path.join(project_root, "src", "anonymity", "multitor", "tor_9000"),
+                    "config_file": os.path.join(project_root, "src", "anonymity", "multitor", "tor_9000", "torrc"),
+                    "log_file": os.path.join(project_root, "src", "anonymity", "multitor", "tor_9000", "tor.log"),
                     "circuit_timeout": 60,
                     "new_circuit_period": 30,
                     "max_circuit_dirtiness": 600
                 },
                 "privoxy": {
                     "listen_port": 8119,
-                    "config_file": "/opt/homebrew/etc/privoxy/config",
-                    "log_file": "/opt/homebrew/var/log/privoxy/logfile",
-                    "forward_socks5": "127.0.0.1:9000"
-                }
+
             },
             "wifi": {
                 "pixiewps": {
-                    "binary_path": "/Users/morningstar/Desktop/AnonSuite/src/wifi/pixiewps/pixiewps",
-                    "results_dir": "/Users/morningstar/Desktop/AnonSuite/run/pixiewps_results",
+                    "binary_path": os.path.join(project_root, "src", "wifi", "pixiewps", "pixiewps"),
+                    "results_dir": os.path.join(project_root, "run", "pixiewps_results"),
                     "timeout": 300,
                     "verbosity": 3
                 },
                 "wifipumpkin3": {
-                    "path": "/Users/morningstar/Desktop/AnonSuite/src/wifi/wifipumpkin3",
-                    "results_dir": "/Users/morningstar/Desktop/AnonSuite/run/wifipumpkin_results",
-                    "config_dir": "/Users/morningstar/Desktop/AnonSuite/config/wifipumpkin",
+                    "path": os.path.join(project_root, "src", "wifi", "wifipumpkin3"),
+                    "results_dir": os.path.join(project_root, "run", "wifipumpkin_results"),
+                    "config_dir": os.path.join(project_root, "config", "wifipumpkin"),
                     "default_ssid": "FreeWiFi",
                     "default_channel": 6,
                     "captive_portal": True
                 },
                 "scanner": {
-                    "results_dir": "/Users/morningstar/Desktop/AnonSuite/run/wifi_scans",
+                    "results_dir": os.path.join(project_root, "run", "wifi_scans"),
                     "scan_timeout": 30,
                     "max_results": 100
                 }
             },
             "security": {
                 "bandit": {
-                    "config_file": "/Users/morningstar/Desktop/AnonSuite/config/bandit.yaml",
+                    "config_file": os.path.join(project_root, "config", "bandit.yaml"),
                     "output_format": "json",
                     "severity_level": "low"
                 },
@@ -104,7 +107,7 @@ class ConfigManager:
                 "confirm_dangerous_actions": True
             },
             "plugins": {
-                "directory": "/Users/morningstar/Desktop/AnonSuite/plugins",
+                "directory": os.path.join(project_root, "plugins"),
                 "auto_load": True,
                 "allowed_imports": ["subprocess", "os", "json", "time", "datetime"]
             }
@@ -377,7 +380,7 @@ class ConfigManager:
         for binary_path in binary_paths:
             if binary_path:
                 if not os.path.exists(binary_path):
-                    issues["errors"].append(f"Binary not found: {binary_path}")
+                    issues["warnings"].append(f"Binary not found (may need compilation): {binary_path}")
                 elif not os.access(binary_path, os.X_OK):
                     issues["errors"].append(f"Binary not executable: {binary_path}")
 
@@ -410,6 +413,7 @@ class ConfigManager:
         except Exception as e:
             self.logger.error(f"Failed to reset configuration: {e}")
             return False
+
 
 # Test function
 def test_config_manager():
