@@ -25,6 +25,28 @@
 
 ## Quick Start
 
+### For Non-Technical Users (New!)
+AnonSuite is now more accessible than ever:
+
+```bash
+# Try the demo mode first (works without dependencies)
+python -m src.anonsuite --demo
+
+# Use the easy installer script
+chmod +x easy_install.sh
+./easy_install.sh
+
+# Learn about security concepts
+python -m src.anonsuite --explain tor
+python -m src.anonsuite --explain wifi
+```
+
+**New Accessibility Features:**
+- **Demo Mode**: Explore the tool without installing dependencies
+- **Auto-Installer**: Automatically installs missing tools
+- **Educational Content**: Learn security concepts interactively
+- **Fallback Mode**: Works even when dependencies are missing
+
 ### Prerequisites
 - **macOS or Linux-based system**
 - **Python 3.8 or higher**

@@ -537,6 +537,26 @@ class AnonSuiteCLI:
                     # Fallback for basic settings
                     if key == 'general.log_level':
                         self.log_level = value
+                        
+            def save_config(self):
+                if hasattr(self.config_manager, 'save_config'):
+                    return self.config_manager.save_config()
+                else:
+                    # Create a simple config file
+                    try:
+                        os.makedirs(self.config_dir, exist_ok=True)
+                        config_data = {
+                            "log_level": self.log_level,
+                            "log_file": self.log_file,
+                            "require_sudo": self.require_sudo
+                        }
+                        with open(self.config_file_path, 'w') as f:
+                            import json
+                            json.dump(config_data, f, indent=2)
+                        return True
+                    except Exception as e:
+                        print(f"Error saving config: {e}")
+                        return False
                 
             def list_profiles(self):
                 return self.config_manager.list_profiles()
@@ -576,6 +596,23 @@ class AnonSuiteCLI:
                     self.log_file = value
                 elif key == 'general.require_sudo':
                     self.require_sudo = value
+                    
+            def save_config(self):
+                # Create a simple config file
+                try:
+                    os.makedirs(self.config_dir, exist_ok=True)
+                    config_data = {
+                        "log_level": self.log_level,
+                        "log_file": self.log_file,
+                        "require_sudo": self.require_sudo
+                    }
+                    with open(self.config_file_path, 'w') as f:
+                        import json
+                        json.dump(config_data, f, indent=2)
+                    return True
+                except Exception as e:
+                    print(f"Error saving config: {e}")
+                    return False
                     
             def list_profiles(self):
                 return ['default']
@@ -1759,6 +1796,126 @@ class AnonSuiteCLI:
             
         print(f"\n{VisualTokens.SYMBOLS['info']} Use --explain <concept> for detailed information")
         print("Example: python -m src.anonsuite --explain tor")
+        
+    def _explain_concept(self, concept: str) -> None:
+        """Explain security concepts in detail for educational purposes"""
+        concept = concept.lower()
+        
+        explanations = {
+            "tor": {
+                "title": "The Tor Network",
+                "description": "Tor (The Onion Router) is a network for anonymous communication",
+                "how_it_works": [
+                    "Your data is encrypted multiple times (like layers of an onion)",
+                    "It passes through at least 3 relay servers around the world",
+                    "Each relay only knows the previous and next step, not the full path",
+                    "Your IP address is hidden from the destination website"
+                ],
+                "use_cases": [
+                    "Protecting privacy from ISP monitoring",
+                    "Bypassing censorship in restrictive countries",
+                    "Anonymous research and journalism",
+                    "Protecting sensitive communications"
+                ],
+                "limitations": [
+                    "Slower than regular internet (due to multiple hops)",
+                    "Some websites block Tor traffic",
+                    "Exit nodes can potentially see unencrypted traffic",
+                    "Requires proper configuration for maximum security"
+                ]
+            },
+            "wifi": {
+                "title": "WiFi Security Testing",
+                "description": "Testing wireless networks for security vulnerabilities",
+                "how_it_works": [
+                    "Scanning for available networks and their security settings",
+                    "Identifying weak encryption or configuration issues",
+                    "Testing for default passwords or WPS vulnerabilities",
+                    "Monitoring network traffic for sensitive information"
+                ],
+                "use_cases": [
+                    "Network administrators testing their own networks",
+                    "Security professionals conducting authorized assessments",
+                    "Educational purposes to understand wireless security",
+                    "Compliance testing for security standards"
+                ],
+                "limitations": [
+                    "Only test networks you own or have permission to test",
+                    "Laws vary by country - know your local regulations",
+                    "Modern networks with WPA3 are much more secure",
+                    "Physical access often required for advanced attacks"
+                ]
+            },
+            "anonymity": {
+                "title": "Digital Anonymity",
+                "description": "Protecting your identity and activities online",
+                "how_it_works": [
+                    "Hiding your IP address through proxies or VPNs",
+                    "Using encrypted communications that can't be traced",
+                    "Avoiding tracking through browser fingerprinting",
+                    "Using different identities for different activities"
+                ],
+                "use_cases": [
+                    "Protecting activists and journalists in dangerous regions",
+                    "Whistleblowing and reporting corruption safely",
+                    "General privacy protection from data collection",
+                    "Research that requires anonymity"
+                ],
+                "limitations": [
+                    "Complete anonymity is very difficult to achieve",
+                    "Behavioral patterns can still identify users",
+                    "Requires changing many habits and tools",
+                    "Legal in most places but can raise suspicion"
+                ]
+            },
+            "penetration": {
+                "title": "Penetration Testing",
+                "description": "Authorized testing to find security weaknesses",
+                "how_it_works": [
+                    "Simulating real attacks on systems with permission",
+                    "Using the same tools and techniques as attackers",
+                    "Documenting vulnerabilities and their impact",
+                    "Providing recommendations for security improvements"
+                ],
+                "use_cases": [
+                    "Companies testing their own security",
+                    "Compliance with security standards and regulations",
+                    "Third-party security assessments",
+                    "Training and education in cybersecurity"
+                ],
+                "limitations": [
+                    "Must have explicit written permission before testing",
+                    "Scope must be clearly defined to avoid legal issues",
+                    "Can accidentally cause system disruptions",
+                    "Requires significant expertise to do safely"
+                ]
+            }
+        }
+        
+        if concept in explanations:
+            info = explanations[concept]
+            print(f"\n{self._colorize(info['title'], 'primary')}")
+            print("=" * 50)
+            print(f"{info['description']}\n")
+            
+            print(f"{VisualTokens.SYMBOLS['info']} {self._colorize('How it works:', 'accent')}")
+            for item in info['how_it_works']:
+                print(f"  • {item}")
+                
+            print(f"\n{VisualTokens.SYMBOLS['check']} {self._colorize('Common use cases:', 'accent')}")
+            for item in info['use_cases']:
+                print(f"  • {item}")
+                
+            print(f"\n{VisualTokens.SYMBOLS['warning']} {self._colorize('Important limitations:', 'accent')}")
+            for item in info['limitations']:
+                print(f"  • {item}")
+                
+            print(f"\n{VisualTokens.SYMBOLS['info']} Learn more: Use AnonSuite's demo mode or check the documentation")
+        else:
+            available = list(explanations.keys())
+            print(f"\n{VisualTokens.SYMBOLS['error']} Unknown concept: {concept}")
+            print(f"Available concepts: {', '.join(available)}")
+            print(f"Example: python -m src.anonsuite --explain tor")
         
     def _show_installation_help(self) -> None:
         """Show simplified installation help for users"""
