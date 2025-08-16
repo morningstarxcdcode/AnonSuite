@@ -57,13 +57,23 @@ except ImportError as e:
         def scan_networks(self, *args, **kwargs):
             return []
 
-# Try to import our config manager - this should work now
+# Try to import our config manager - fix import path
 try:
-    from config_manager import ConfigManager
+    from ..config_manager import ConfigManager
     CONFIG_MANAGER_AVAILABLE = True
 except ImportError:
-    print("Warning: ConfigManager not available, using fallback")
-    CONFIG_MANAGER_AVAILABLE = False
+    try:
+        # Fallback: try absolute import from src directory
+        import sys
+        import os
+        src_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        if src_path not in sys.path:
+            sys.path.insert(0, src_path)
+        from config_manager import ConfigManager
+        CONFIG_MANAGER_AVAILABLE = True
+    except ImportError:
+        print("Warning: ConfigManager not available, using fallback")
+        CONFIG_MANAGER_AVAILABLE = False
 
 # --- Version and Metadata ---
 __version__ = "2.0.0"
@@ -122,7 +132,8 @@ class VisualTokens:
         'arrow': '→',
         'bullet': '•',
         'check': '✓',
-        'cross': '✗'
+        'cross': '✗',
+        'question': '?'  # Add missing question symbol
     }
 
     # ASCII Art Components
@@ -134,6 +145,7 @@ class VisualTokens:
     """
 
 # --- Configuration Management ---
+@dataclass
 @dataclass
 class Config:
     """Configuration data structure with validation"""
@@ -482,18 +494,93 @@ class AnonSuiteCLI:
     """Enhanced CLI interface with professional error handling and visual design"""
 
     def __init__(self):
-        # Initialize configuration manager - this integration took some debugging
+        # Initialize configuration manager with better fallback handling
         try:
+            # Try to import from the correct path
+            import sys
+            import os
+            src_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            if src_path not in sys.path:
+                sys.path.insert(0, src_path)
             from config_manager import ConfigManager
             self.config_manager = ConfigManager()
-            self.config = self.config_manager
+            self.config = self._create_config_wrapper(self.config_manager)
         except Exception as e:
             print(f"Warning: ConfigManager initialization failed: {e}")
-            # Create a minimal fallback config
-            self.config = type('Config', (), {
-                'get': lambda self, key, default=None: default,
-                'list_profiles': lambda self: ['default']
-            })()
+            # Create a fallback config object that has the needed attributes
+            self.config_manager = None
+            self.config = self._create_fallback_config()
+
+    def _create_config_wrapper(self, config_manager):
+        """Create a config wrapper that works with both old and new APIs"""
+        class ConfigWrapper:
+            def __init__(self, cm):
+                self.config_manager = cm
+                # Set basic attributes for compatibility
+                self.anonsuite_root = cm.get("general.project_root", os.getcwd())
+                self.src_root = os.path.join(self.anonsuite_root, "src")
+                self.anonymity_module = os.path.join(self.anonsuite_root, "src", "anonymity")
+                self.wifi_module = os.path.join(self.anonsuite_root, "src", "wifi")
+                self.log_level = cm.get("general.log_level", "INFO")
+                self.log_file = cm.get("general.log_file")
+                self.require_sudo = cm.get("general.require_sudo", True)
+                self.config_file_path = os.path.join(os.path.expanduser("~"), ".anonsuite", "config.json")
+                self.config_dir = os.path.dirname(self.config_file_path)
+            
+            def get(self, key, default=None):
+                return self.config_manager.get(key, default)
+                
+            def set(self, key, value):
+                if hasattr(self.config_manager, 'set'):
+                    return self.config_manager.set(key, value)
+                else:
+                    # Fallback for basic settings
+                    if key == 'general.log_level':
+                        self.log_level = value
+                
+            def list_profiles(self):
+                return self.config_manager.list_profiles()
+        
+        return ConfigWrapper(config_manager)
+        
+    def _create_fallback_config(self):
+        """Create a fallback config for when ConfigManager fails"""
+        class FallbackConfig:
+            def __init__(self):
+                self.anonsuite_root = os.getcwd()
+                self.src_root = os.path.join(os.getcwd(), "src")
+                self.anonymity_module = os.path.join(os.getcwd(), "src", "anonymity")
+                self.wifi_module = os.path.join(os.getcwd(), "src", "wifi")
+                self.log_level = "INFO"
+                self.log_file = None
+                self.require_sudo = True
+                self.config_file_path = os.path.join(os.path.expanduser("~"), ".anonsuite", "config.json")
+                self.config_dir = os.path.dirname(self.config_file_path)
+            
+            def get(self, key, default=None):
+                # Simple key mapping for common requests
+                key_map = {
+                    'general.data_dir': 'run',
+                    'general.temp_dir': '/tmp/anonsuite',
+                    'plugins.directory': 'plugins',
+                    'general.log_level': self.log_level,
+                    'general.log_file': self.log_file
+                }
+                return key_map.get(key, default)
+                
+            def set(self, key, value):
+                # Handle basic settings
+                if key == 'general.log_level':
+                    self.log_level = value
+                elif key == 'general.log_file':
+                    self.log_file = value
+                elif key == 'general.require_sudo':
+                    self.require_sudo = value
+                    
+            def list_profiles(self):
+                return ['default']
+        
+        return FallbackConfig()
 
         self.running = True
 
@@ -507,7 +594,9 @@ class AnonSuiteCLI:
 
         # Initialize Plugin Manager - had to debug this integration
         try:
-
+            plugins_dir = self.config.get('plugins.directory', 'plugins')
+            if not os.path.isabs(plugins_dir):
+                plugins_dir = os.path.join(self.config.anonsuite_root, plugins_dir)
             self.plugin_manager = PluginManager(self, plugins_dir)
         except Exception as e:
             print(f"Warning: Plugin manager initialization failed: {e}")
@@ -1494,6 +1583,209 @@ class AnonSuiteCLI:
   - Follow local laws and regulations
         """)
 
+    def _run_quick_start_demo(self) -> None:
+        """Run an interactive demo for new users"""
+        print(f"\n{self._colorize('AnonSuite Demo Mode', 'primary')}")
+        print("=" * 50)
+        print("Welcome! This demo will show you what AnonSuite can do.")
+        print("Even without all dependencies installed, you can explore the interface.\n")
+        
+        # Show current health status with user-friendly explanation
+        print(f"{VisualTokens.SYMBOLS['info']} First, let's check what's available on your system:")
+        
+        # Run a quick health check but make it more user-friendly
+        result = self._run_health_check()
+        
+        print(f"\n{VisualTokens.SYMBOLS['info']} Don't worry if some things are missing!")
+        print("Here's what you can do right now:\n")
+        
+        # Show available features regardless of dependencies
+        available_features = []
+        
+        if result and result.get('checks', {}).get('Directory Structure', {}).get('status') == 'pass':
+            available_features.append("✓ Browse the interface and menus")
+            
+        available_features.extend([
+            "✓ Run configuration wizard to set up the tool",
+            "✓ Explore help system and documentation", 
+            "✓ View available plugins and features",
+            "✓ Learn about security concepts with --explain"
+        ])
+        
+        for feature in available_features:
+            print(f"  {feature}")
+            
+        print(f"\n{VisualTokens.SYMBOLS['info']} To get full functionality, you can install missing tools:")
+        print("• Linux: sudo apt install tor privoxy wireless-tools")
+        print("• macOS: brew install tor privoxy")
+        print("• Or use Docker: docker run anonsuite (when available)")
+        
+        print(f"\n{VisualTokens.SYMBOLS['question']} Would you like to:")
+        print("1. Try the configuration wizard")
+        print("2. Explore the main menu (limited functionality)")
+        print("3. Learn about security concepts")
+        print("4. View installation help")
+        print("5. Auto-install dependencies (if possible)")
+        print("0. Exit demo")
+        
+        choice = self._get_user_choice()
+        
+        if choice == 1:
+            print(f"\n{VisualTokens.SYMBOLS['arrow']} Starting configuration wizard...")
+            try:
+                self._run_configuration_wizard()
+            except Exception as e:
+                print(f"Configuration wizard had an issue: {e}")
+                print("This is normal if dependencies are missing.")
+        elif choice == 2:
+            print(f"\n{VisualTokens.SYMBOLS['arrow']} Opening main menu (demo mode)...")
+            print("Note: Some features won't work without dependencies.")
+            input(f"\n{VisualTokens.COLORS['accent']}Press Enter to continue...{VisualTokens.COLORS['reset']}")
+            self.main_menu()
+        elif choice == 3:
+            self._show_demo_concepts()
+        elif choice == 4:
+            self._show_installation_help()
+        elif choice == 5:
+            self._attempt_auto_install()
+            
+    def _attempt_auto_install(self) -> None:
+        """Attempt to automatically install dependencies with user guidance"""
+        print(f"\n{self._colorize('Auto-Install Helper', 'primary')}")
+        print("=" * 50)
+        
+        print(f"{VisualTokens.SYMBOLS['info']} This will try to help you install missing dependencies.")
+        print(f"{VisualTokens.SYMBOLS['warning']} You may need to enter your password for sudo commands.")
+        
+        # Detect platform and show appropriate commands
+        import platform
+        system = platform.system().lower()
+        
+        if system == "linux":
+            print(f"\n{VisualTokens.SYMBOLS['info']} Detected Linux system")
+            print("I'll try to install: tor, privoxy, wireless-tools")
+            
+            if input(f"\n{VisualTokens.SYMBOLS['question']} Proceed with installation? (y/N): ").lower().startswith('y'):
+                self._install_linux_dependencies()
+                
+        elif system == "darwin":  # macOS
+            print(f"\n{VisualTokens.SYMBOLS['info']} Detected macOS system")
+            print("I'll try to install: tor, privoxy")
+            
+            if input(f"\n{VisualTokens.SYMBOLS['question']} Proceed with installation? (y/N): ").lower().startswith('y'):
+                self._install_macos_dependencies()
+                
+        else:
+            print(f"\n{VisualTokens.SYMBOLS['warning']} Platform '{system}' not supported for auto-install")
+            print("Please install dependencies manually:")
+            print("- Tor: https://www.torproject.org/download/")
+            print("- Privoxy: http://www.privoxy.org/")
+            
+    def _install_linux_dependencies(self) -> None:
+        """Install dependencies on Linux"""
+        print(f"\n{VisualTokens.SYMBOLS['arrow']} Installing Linux dependencies...")
+        
+        commands = [
+            ["sudo", "apt", "update"],
+            ["sudo", "apt", "install", "-y", "tor", "privoxy", "wireless-tools", "aircrack-ng"]
+        ]
+        
+        for cmd in commands:
+            try:
+                print(f"Running: {' '.join(cmd)}")
+                result = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=300)
+                print(f"{VisualTokens.SYMBOLS['success']} Command completed successfully")
+            except subprocess.CalledProcessError as e:
+                print(f"{VisualTokens.SYMBOLS['error']} Command failed: {e}")
+                print(f"You may need to run manually: {' '.join(cmd)}")
+            except subprocess.TimeoutExpired:
+                print(f"{VisualTokens.SYMBOLS['warning']} Command timed out")
+                break
+            except Exception as e:
+                print(f"{VisualTokens.SYMBOLS['error']} Error: {e}")
+                break
+                
+        print(f"\n{VisualTokens.SYMBOLS['info']} Installation attempt complete. Run health check to verify.")
+        
+    def _install_macos_dependencies(self) -> None:
+        """Install dependencies on macOS using Homebrew"""
+        print(f"\n{VisualTokens.SYMBOLS['arrow']} Installing macOS dependencies...")
+        
+        # Check if homebrew is installed
+        try:
+            subprocess.run(["brew", "--version"], check=True, capture_output=True)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            print(f"{VisualTokens.SYMBOLS['error']} Homebrew not found!")
+            print("Please install Homebrew first: https://brew.sh/")
+            print("Then run: brew install tor privoxy")
+            return
+            
+        commands = [
+            ["brew", "install", "tor"],
+            ["brew", "install", "privoxy"]
+        ]
+        
+        for cmd in commands:
+            try:
+                print(f"Running: {' '.join(cmd)}")
+                result = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=300)
+                print(f"{VisualTokens.SYMBOLS['success']} Command completed successfully")
+            except subprocess.CalledProcessError as e:
+                print(f"{VisualTokens.SYMBOLS['error']} Command failed: {e}")
+                print(f"You may need to run manually: {' '.join(cmd)}")
+            except subprocess.TimeoutExpired:
+                print(f"{VisualTokens.SYMBOLS['warning']} Command timed out")
+                break
+            except Exception as e:
+                print(f"{VisualTokens.SYMBOLS['error']} Error: {e}")
+                break
+                
+        print(f"\n{VisualTokens.SYMBOLS['info']} Installation attempt complete. Run health check to verify.")
+            
+    def _show_demo_concepts(self) -> None:
+        """Show educational content about security concepts"""
+        print(f"\n{self._colorize('Security Concepts Overview', 'primary')}")
+        print("=" * 50)
+        concepts = {
+            "Anonymity": "Hiding your identity and location online using tools like Tor",
+            "Tor Network": "A network that routes your traffic through multiple servers to hide your IP",
+            "WiFi Security": "Testing wireless networks for vulnerabilities and security issues",
+            "Penetration Testing": "Authorized testing of systems to find security weaknesses"
+        }
+        
+        for concept, explanation in concepts.items():
+            print(f"\n{VisualTokens.SYMBOLS['info']} {self._colorize(concept, 'accent')}")
+            print(f"  {explanation}")
+            
+        print(f"\n{VisualTokens.SYMBOLS['info']} Use --explain <concept> for detailed information")
+        print("Example: python -m src.anonsuite --explain tor")
+        
+    def _show_installation_help(self) -> None:
+        """Show simplified installation help for users"""
+        print(f"\n{self._colorize('Getting AnonSuite Fully Working', 'primary')}")
+        print("=" * 50)
+        
+        print(f"{VisualTokens.SYMBOLS['info']} For users with limited technical knowledge:")
+        print("\n1. If you're on Ubuntu/Debian Linux:")
+        print("   Copy and paste this command:")
+        print("   sudo apt update && sudo apt install tor privoxy wireless-tools")
+        
+        print("\n2. If you're on macOS with Homebrew:")
+        print("   Copy and paste this command:")
+        print("   brew install tor privoxy")
+        
+        print("\n3. If you don't have admin access:")
+        print("   - You can still use the configuration wizard")
+        print("   - The tool will work in 'lite mode' with limited features")
+        print("   - Consider using a virtual machine or Docker")
+        
+        print(f"\n{VisualTokens.SYMBOLS['warning']} Important Notes:")
+        print("- This tool is for learning and authorized testing only")
+        print("- Some features require administrator privileges")
+        print("- Always get permission before testing networks")
+        
+        input(f"\n{VisualTokens.COLORS['accent']}Press Enter to continue...{VisualTokens.COLORS['reset']}")
+
     def _show_command_reference(self) -> None:
         """Show command reference"""
         print(f"\n{self._colorize('Command Reference', 'accent')}")
@@ -2069,7 +2361,10 @@ A comprehensive security toolkit for anonymity and WiFi auditing
 
             # Try to load and validate configuration
             try:
-                issues = self.config.validate_config()
+                if self.config_manager:
+                    issues = self.config_manager.validate_config()
+                else:
+                    issues = {"errors": [], "warnings": ["Using fallback config"]}
                 if issues['errors']:
                     return {
                         'status': 'fail',
@@ -2252,7 +2547,10 @@ A comprehensive security toolkit for anonymity and WiFi auditing
                 }
 
             # Try to load plugins
-            loaded_plugins = len(self.plugin_manager.loaded_plugins)
+            if hasattr(self, "plugin_manager") and self.plugin_manager:
+                loaded_plugins = len(self.plugin_manager.loaded_plugins)
+            else:
+                loaded_plugins = 0
 
             if loaded_plugins == 0:
                 return {
@@ -2910,7 +3208,10 @@ def _add_cli_helper_methods():
 
             # Try to load and validate configuration
             try:
-                issues = self.config.validate_config()
+                if self.config_manager:
+                    issues = self.config_manager.validate_config()
+                else:
+                    issues = {"errors": [], "warnings": ["Using fallback config"]}
                 if issues['errors']:
                     return {
                         'status': 'fail',
@@ -3093,7 +3394,10 @@ def _add_cli_helper_methods():
                 }
 
             # Try to load plugins
-            loaded_plugins = len(self.plugin_manager.loaded_plugins)
+            if hasattr(self, "plugin_manager") and self.plugin_manager:
+                loaded_plugins = len(self.plugin_manager.loaded_plugins)
+            else:
+                loaded_plugins = 0
 
             if loaded_plugins == 0:
                 return {
