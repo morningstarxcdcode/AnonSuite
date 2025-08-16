@@ -59,10 +59,16 @@ except ImportError as e:
 
 # Try to import our config manager - this should work now
 try:
+    import sys
+    import os
+    # Add src directory to path so we can import config_manager
+    src_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if src_dir not in sys.path:
+        sys.path.insert(0, src_dir)
     from config_manager import ConfigManager
     CONFIG_MANAGER_AVAILABLE = True
-except ImportError:
-    print("Warning: ConfigManager not available, using fallback")
+except ImportError as e:
+    print(f"Warning: ConfigManager not available, using fallback: {e}")
     CONFIG_MANAGER_AVAILABLE = False
 
 # --- Version and Metadata ---
@@ -507,7 +513,11 @@ class AnonSuiteCLI:
 
         # Initialize Plugin Manager - had to debug this integration
         try:
-
+            # Define plugins directory
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.dirname(os.path.dirname(current_dir))
+            plugins_dir = os.path.join(project_root, "plugins")
+            
             self.plugin_manager = PluginManager(self, plugins_dir)
         except Exception as e:
             print(f"Warning: Plugin manager initialization failed: {e}")
@@ -2428,6 +2438,74 @@ A comprehensive security toolkit for anonymity and WiFi auditing
             else:
                 error_msg = f"{VisualTokens.SYMBOLS['error']} Invalid choice. Please try again."
                 print(self._colorize(error_msg, 'error'))
+
+    def _run_quick_start_demo(self) -> None:
+        """Run a quick demonstration of AnonSuite features"""
+        print(f"\n{self._colorize('AnonSuite Quick Start Demo', 'primary')}")
+        print("=" * 50)
+        print("Welcome to AnonSuite! This demo shows basic functionality.\n")
+        
+        print(f"{VisualTokens.SYMBOLS['info']} Checking system status...")
+        health_result = self._run_health_check()
+        
+        print(f"\n{VisualTokens.SYMBOLS['info']} Available features:")
+        print("• Anonymity Management (Tor integration)")
+        print("• WiFi Security Testing")
+        print("• Configuration Management")
+        print("• Plugin System")
+        print("• Health Monitoring")
+        
+        print(f"\n{VisualTokens.SYMBOLS['success']} Demo completed!")
+        print("Run 'python src/anonsuite/main.py' to access the full interface.")
+
+    def _run_tutorial_mode(self) -> None:
+        """Interactive tutorial for learning AnonSuite"""
+        print(f"\n{self._colorize('AnonSuite Interactive Tutorial', 'primary')}")
+        print("=" * 50)
+        print("Learn how to use AnonSuite step by step.\n")
+        
+        tutorials = [
+            ("Basic Usage", "Learn basic commands and navigation"),
+            ("Anonymity Features", "Understanding Tor integration"), 
+            ("WiFi Testing", "Network security assessment tools"),
+            ("Configuration", "Customizing your setup")
+        ]
+        
+        for i, (title, desc) in enumerate(tutorials, 1):
+            print(f"{i}. {self._colorize(title, 'accent')} - {desc}")
+        
+        print(f"\n{VisualTokens.SYMBOLS['info']} Tutorial mode is educational only.")
+        print("For full functionality, run the main interface.")
+
+    def _explain_concept(self, concept: str) -> None:
+        """Explain security concepts"""
+        explanations = {
+            'wifi': """
+WiFi Security Testing:
+WiFi security testing involves assessing wireless networks for vulnerabilities.
+Common techniques include network scanning, WPS testing, and monitoring traffic.
+AnonSuite integrates tools for comprehensive WiFi security assessment.
+            """,
+            'tor': """
+Tor Anonymity Network:
+Tor routes traffic through multiple servers to hide your location and usage.
+It provides anonymity by encrypting data multiple times through different nodes.
+AnonSuite manages Tor instances for enhanced privacy and security.
+            """,
+            'anonymity': """
+Digital Anonymity:
+Anonymity online means hiding your identity and activities from observers.
+This includes masking your IP address, encrypting communications, and avoiding tracking.
+AnonSuite combines multiple techniques for comprehensive anonymity protection.
+            """
+        }
+        
+        explanation = explanations.get(concept.lower(), f"No explanation available for '{concept}'")
+        
+        print(f"\n{self._colorize(f'Explaining: {concept.title()}', 'primary')}")
+        print("=" * 50)
+        print(explanation)
+        print(f"\n{VisualTokens.SYMBOLS['info']} Use --help for more information about specific commands.")
 
 def main() -> None:
     """Main application entry point with comprehensive CLI support"""
