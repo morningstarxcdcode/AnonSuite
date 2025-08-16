@@ -44,7 +44,7 @@ class ConfigManager:
                 "log_level": "INFO",
                 "log_file": "/Users/morningstar/Desktop/AnonSuite/log/anonsuite.log",
                 "data_dir": "/Users/morningstar/Desktop/AnonSuite/run",
-                "temp_dir": "/tmp/anonsuite"
+                "temp_dir": "/tmp/anonsuite",
             },
             "anonymity": {
                 "tor": {
@@ -55,21 +55,21 @@ class ConfigManager:
                     "log_file": "/Users/morningstar/Desktop/AnonSuite/src/anonymity/multitor/tor_9000/tor.log",
                     "circuit_timeout": 60,
                     "new_circuit_period": 30,
-                    "max_circuit_dirtiness": 600
+                    "max_circuit_dirtiness": 600,
                 },
                 "privoxy": {
                     "listen_port": 8119,
                     "config_file": "/opt/homebrew/etc/privoxy/config",
                     "log_file": "/opt/homebrew/var/log/privoxy/logfile",
-                    "forward_socks5": "127.0.0.1:9000"
-                }
+                    "forward_socks5": "127.0.0.1:9000",
+                },
             },
             "wifi": {
                 "pixiewps": {
                     "binary_path": "/Users/morningstar/Desktop/AnonSuite/src/wifi/pixiewps/pixiewps",
                     "results_dir": "/Users/morningstar/Desktop/AnonSuite/run/pixiewps_results",
                     "timeout": 300,
-                    "verbosity": 3
+                    "verbosity": 3,
                 },
                 "wifipumpkin3": {
                     "path": "/Users/morningstar/Desktop/AnonSuite/src/wifi/wifipumpkin3",
@@ -77,37 +77,37 @@ class ConfigManager:
                     "config_dir": "/Users/morningstar/Desktop/AnonSuite/config/wifipumpkin",
                     "default_ssid": "FreeWiFi",
                     "default_channel": 6,
-                    "captive_portal": True
+                    "captive_portal": True,
                 },
                 "scanner": {
                     "results_dir": "/Users/morningstar/Desktop/AnonSuite/run/wifi_scans",
                     "scan_timeout": 30,
-                    "max_results": 100
-                }
+                    "max_results": 100,
+                },
             },
             "security": {
                 "bandit": {
                     "config_file": "/Users/morningstar/Desktop/AnonSuite/config/bandit.yaml",
                     "output_format": "json",
-                    "severity_level": "low"
+                    "severity_level": "low",
                 },
                 "permissions": {
                     "require_root": False,
                     "check_file_permissions": True,
-                    "secure_temp_files": True
-                }
+                    "secure_temp_files": True,
+                },
             },
             "ui": {
                 "colors": True,
                 "progress_indicators": True,
                 "menu_timeout": 300,
-                "confirm_dangerous_actions": True
+                "confirm_dangerous_actions": True,
             },
             "plugins": {
                 "directory": "/Users/morningstar/Desktop/AnonSuite/plugins",
                 "auto_load": True,
-                "allowed_imports": ["subprocess", "os", "json", "time", "datetime"]
-            }
+                "allowed_imports": ["subprocess", "os", "json", "time", "datetime"],
+            },
         }
 
     def _load_default_config(self):
@@ -157,10 +157,10 @@ class ConfigManager:
             config_with_meta["_metadata"] = {
                 "created": datetime.now().isoformat(),
                 "profile": profile or "default",
-                "version": self.config.get("general", {}).get("version", "2.0.0")
+                "version": self.config.get("general", {}).get("version", "2.0.0"),
             }
 
-            with open(config_file, 'w') as f:
+            with open(config_file, "w") as f:
                 json.dump(config_with_meta, f, indent=2)
 
             self.logger.info(f"Configuration saved to {config_file}")
@@ -173,7 +173,7 @@ class ConfigManager:
     def get(self, key_path: str, default: Any = None) -> Any:
         """Get configuration value using dot notation (e.g., 'tor.socks_port')"""
         try:
-            keys = key_path.split('.')
+            keys = key_path.split(".")
             value = self.config
 
             for key in keys:
@@ -190,7 +190,7 @@ class ConfigManager:
     def set(self, key_path: str, value: Any) -> bool:
         """Set configuration value using dot notation"""
         try:
-            keys = key_path.split('.')
+            keys = key_path.split(".")
             config_ref = self.config
 
             # Navigate to the parent of the target key
@@ -212,7 +212,9 @@ class ConfigManager:
         try:
             if base_profile and base_profile != "default":
                 # Load base profile
-                base_config_file = os.path.join(self.profiles_dir, f"{base_profile}.json")
+                base_config_file = os.path.join(
+                    self.profiles_dir, f"{base_profile}.json"
+                )
                 if os.path.exists(base_config_file):
                     with open(base_config_file) as f:
                         base_config = json.load(f)
@@ -232,10 +234,10 @@ class ConfigManager:
                 "created": datetime.now().isoformat(),
                 "profile": name,
                 "base_profile": base_profile or "default",
-                "version": self.config.get("general", {}).get("version", "2.0.0")
+                "version": self.config.get("general", {}).get("version", "2.0.0"),
             }
 
-            with open(profile_file, 'w') as f:
+            with open(profile_file, "w") as f:
                 json.dump(profile_config, f, indent=2)
 
             self.logger.info(f"Profile '{name}' created")
@@ -252,7 +254,7 @@ class ConfigManager:
         try:
             if os.path.exists(self.profiles_dir):
                 for filename in os.listdir(self.profiles_dir):
-                    if filename.endswith('.json'):
+                    if filename.endswith(".json"):
                         profile_name = filename[:-5]  # Remove .json extension
                         profiles.append(profile_name)
 
@@ -301,10 +303,12 @@ class ConfigManager:
             config_data["_export_metadata"] = {
                 "exported_at": datetime.now().isoformat(),
                 "exported_from": name,
-                "anonsuite_version": self.config.get("general", {}).get("version", "2.0.0")
+                "anonsuite_version": self.config.get("general", {}).get(
+                    "version", "2.0.0"
+                ),
             }
 
-            with open(export_path, 'w') as dst:
+            with open(export_path, "w") as dst:
                 json.dump(config_data, dst, indent=2)
 
             self.logger.info(f"Profile '{name}' exported to {export_path}")
@@ -333,12 +337,12 @@ class ConfigManager:
                 "created": datetime.now().isoformat(),
                 "profile": name,
                 "imported_from": import_path,
-                "version": self.config.get("general", {}).get("version", "2.0.0")
+                "version": self.config.get("general", {}).get("version", "2.0.0"),
             }
 
             # Save as new profile
             profile_file = os.path.join(self.profiles_dir, f"{name}.json")
-            with open(profile_file, 'w') as f:
+            with open(profile_file, "w") as f:
                 json.dump(imported_config, f, indent=2)
 
             self.logger.info(f"Profile '{name}' imported from {import_path}")
@@ -350,11 +354,7 @@ class ConfigManager:
 
     def validate_config(self) -> Dict[str, List[str]]:
         """Validate current configuration"""
-        issues = {
-            "errors": [],
-            "warnings": [],
-            "info": []
-        }
+        issues = {"errors": [], "warnings": [], "info": []}
 
         # Check required directories
         required_dirs = [
@@ -362,7 +362,7 @@ class ConfigManager:
             self.get("general.temp_dir"),
             self.get("wifi.pixiewps.results_dir"),
             self.get("wifi.wifipumpkin3.results_dir"),
-            self.get("wifi.scanner.results_dir")
+            self.get("wifi.scanner.results_dir"),
         ]
 
         for dir_path in required_dirs:
@@ -370,9 +370,7 @@ class ConfigManager:
                 issues["warnings"].append(f"Directory does not exist: {dir_path}")
 
         # Check binary paths
-        binary_paths = [
-            self.get("wifi.pixiewps.binary_path")
-        ]
+        binary_paths = [self.get("wifi.pixiewps.binary_path")]
 
         for binary_path in binary_paths:
             if binary_path:
@@ -385,7 +383,7 @@ class ConfigManager:
         ports = [
             self.get("anonymity.tor.socks_port"),
             self.get("anonymity.tor.control_port"),
-            self.get("anonymity.privoxy.listen_port")
+            self.get("anonymity.privoxy.listen_port"),
         ]
 
         for port in ports:
@@ -411,6 +409,7 @@ class ConfigManager:
             self.logger.error(f"Failed to reset configuration: {e}")
             return False
 
+
 # Test function
 def test_config_manager():
     """Test function for configuration manager"""
@@ -423,7 +422,7 @@ def test_config_manager():
     print(f"WiFi results dir: {config_mgr.get('wifi.scanner.results_dir')}")
 
     # Test setting values
-    config_mgr.set('general.debug', True)
+    config_mgr.set("general.debug", True)
     print(f"Debug mode: {config_mgr.get('general.debug')}")
 
     # Test profiles
@@ -432,9 +431,12 @@ def test_config_manager():
 
     # Test validation
     issues = config_mgr.validate_config()
-    print(f"Config validation - Errors: {len(issues['errors'])}, Warnings: {len(issues['warnings'])}")
+    print(
+        f"Config validation - Errors: {len(issues['errors'])}, Warnings: {len(issues['warnings'])}"
+    )
 
     return {"test": "completed", "profiles": len(profiles)}
+
 
 if __name__ == "__main__":
     test_config_manager()

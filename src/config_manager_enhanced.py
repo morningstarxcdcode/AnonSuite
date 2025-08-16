@@ -12,10 +12,12 @@ from typing import Any, Dict, List
 
 class ConfigurationError(Exception):
     """User-friendly configuration errors"""
+
     def __init__(self, message: str, suggestion: str = None):
         self.message = message
         self.suggestion = suggestion
         super().__init__(self.message)
+
 
 class ConfigManagerEnhanced:
     """Enhanced configuration manager with bulletproof error handling"""
@@ -62,45 +64,55 @@ class ConfigManagerEnhanced:
                 "log_level": "INFO",
                 "log_file": os.path.join(self.project_root, "log", "anonsuite.log"),
                 "data_dir": os.path.join(self.project_root, "run"),
-                "temp_dir": "/tmp/anonsuite"
+                "temp_dir": "/tmp/anonsuite",
             },
             "anonymity": {
                 "tor": {
                     "socks_port": 9000,
                     "control_port": 9001,
-                    "data_directory": os.path.join(self.project_root, "src", "anonymity", "multitor", "tor_9000"),
-                    "config_file": os.path.join(self.project_root, "src", "anonymity", "multitor", "tor_9000", "torrc"),
+                    "data_directory": os.path.join(
+                        self.project_root, "src", "anonymity", "multitor", "tor_9000"
+                    ),
+                    "config_file": os.path.join(
+                        self.project_root,
+                        "src",
+                        "anonymity",
+                        "multitor",
+                        "tor_9000",
+                        "torrc",
+                    ),
                     "circuit_timeout": 60,
-                    "new_circuit_period": 30
+                    "new_circuit_period": 30,
                 },
-                "privoxy": {
-                    "listen_port": 8119,
-                    "forward_socks5": "127.0.0.1:9000"
-                }
+                "privoxy": {"listen_port": 8119, "forward_socks5": "127.0.0.1:9000"},
             },
             "wifi": {
                 "scanner": {
                     "scan_timeout": 30,
                     "max_results": 100,
-                    "results_dir": os.path.join(self.project_root, "run", "wifi_scans")
+                    "results_dir": os.path.join(self.project_root, "run", "wifi_scans"),
                 },
                 "pixiewps": {
-                    "binary_path": os.path.join(self.project_root, "src", "wifi", "pixiewps", "pixiewps"),
-                    "results_dir": os.path.join(self.project_root, "run", "pixiewps_results"),
-                    "timeout": 300
-                }
+                    "binary_path": os.path.join(
+                        self.project_root, "src", "wifi", "pixiewps", "pixiewps"
+                    ),
+                    "results_dir": os.path.join(
+                        self.project_root, "run", "pixiewps_results"
+                    ),
+                    "timeout": 300,
+                },
             },
             "plugins": {
                 "directory": os.path.join(self.project_root, "plugins"),
                 "auto_load": True,
-                "allowed_imports": ["subprocess", "os", "json", "time", "datetime"]
+                "allowed_imports": ["subprocess", "os", "json", "time", "datetime"],
             },
             "ui": {
                 "colors": True,
                 "progress_indicators": True,
                 "menu_timeout": 300,
-                "confirm_dangerous_actions": True
-            }
+                "confirm_dangerous_actions": True,
+            },
         }
 
     def _initialize_config(self) -> None:
@@ -109,7 +121,10 @@ class ConfigManagerEnhanced:
             # Ensure directories exist
             os.makedirs(self.config_dir, exist_ok=True)
             os.makedirs(self.profiles_dir, exist_ok=True)
-            os.makedirs(os.path.dirname(self._default_config["general"]["log_file"]), exist_ok=True)
+            os.makedirs(
+                os.path.dirname(self._default_config["general"]["log_file"]),
+                exist_ok=True,
+            )
             os.makedirs(self._default_config["general"]["data_dir"], exist_ok=True)
 
             # Load configuration
@@ -128,18 +143,20 @@ class ConfigManagerEnhanced:
                     file_config = json.load(f)
 
                 # Merge with defaults (defaults take precedence for missing keys)
-                self._current_config = self._merge_configs(self._default_config, file_config)
+                self._current_config = self._merge_configs(
+                    self._default_config, file_config
+                )
 
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as e:
                 raise ConfigurationError(
                     "Configuration file has invalid JSON format",
-                    f"Fix the JSON syntax in {self.config_file_path} or delete it to recreate"
-                )
+                    f"Fix the JSON syntax in {self.config_file_path} or delete it to recreate",
+                ) from e
             except Exception as e:
                 raise ConfigurationError(
                     f"Cannot read configuration file: {e}",
-                    f"Check file permissions for {self.config_file_path}"
-                )
+                    f"Check file permissions for {self.config_file_path}",
+                ) from e
         else:
             # Create default configuration file
             self._current_config = self._default_config.copy()
@@ -150,7 +167,11 @@ class ConfigManagerEnhanced:
         result = default.copy()
 
         for key, value in user.items():
-            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            if (
+                key in result
+                and isinstance(result[key], dict)
+                and isinstance(value, dict)
+            ):
                 result[key] = self._merge_configs(result[key], value)
             else:
                 result[key] = value
@@ -160,7 +181,7 @@ class ConfigManagerEnhanced:
     def get(self, key: str, default: Any = None) -> Any:
         """Get configuration value using dot notation (e.g., 'general.version')"""
         try:
-            keys = key.split('.')
+            keys = key.split(".")
             value = self._current_config
 
             for k in keys:
@@ -176,7 +197,7 @@ class ConfigManagerEnhanced:
 
     def set(self, key: str, value: Any) -> None:
         """Set configuration value using dot notation"""
-        keys = key.split('.')
+        keys = key.split(".")
         config = self._current_config
 
         # Navigate to the parent of the target key
@@ -193,14 +214,14 @@ class ConfigManagerEnhanced:
         try:
             os.makedirs(self.config_dir, exist_ok=True)
 
-            with open(self.config_file_path, 'w') as f:
+            with open(self.config_file_path, "w") as f:
                 json.dump(self._current_config, f, indent=2)
 
         except Exception as e:
             raise ConfigurationError(
                 f"Cannot save configuration: {e}",
-                f"Check write permissions for {self.config_dir}"
-            )
+                f"Check write permissions for {self.config_dir}",
+            ) from e
 
     def validate_config(self) -> Dict[str, List[str]]:
         """Validate configuration and return issues"""
@@ -211,36 +232,48 @@ class ConfigManagerEnhanced:
             required_dirs = [
                 self.get("general.data_dir"),
                 self.get("general.temp_dir"),
-                self.get("plugins.directory")
+                self.get("plugins.directory"),
             ]
 
             for dir_path in required_dirs:
                 if dir_path and not os.path.exists(dir_path):
                     try:
                         os.makedirs(dir_path, exist_ok=True)
-                        issues["warnings"].append(f"Created missing directory: {dir_path}")
+                        issues["warnings"].append(
+                            f"Created missing directory: {dir_path}"
+                        )
                     except Exception:
-                        issues["errors"].append(f"Cannot create required directory: {dir_path}")
+                        issues["errors"].append(
+                            f"Cannot create required directory: {dir_path}"
+                        )
 
             # Check port ranges
             tor_socks = self.get("anonymity.tor.socks_port", 9000)
             tor_control = self.get("anonymity.tor.control_port", 9001)
 
             if not (1024 <= tor_socks <= 65535):
-                issues["errors"].append(f"Tor SOCKS port {tor_socks} is not in valid range (1024-65535)")
+                issues["errors"].append(
+                    f"Tor SOCKS port {tor_socks} is not in valid range (1024-65535)"
+                )
 
             if not (1024 <= tor_control <= 65535):
-                issues["errors"].append(f"Tor control port {tor_control} is not in valid range (1024-65535)")
+                issues["errors"].append(
+                    f"Tor control port {tor_control} is not in valid range (1024-65535)"
+                )
 
             if tor_socks == tor_control:
-                issues["errors"].append("Tor SOCKS and control ports cannot be the same")
+                issues["errors"].append(
+                    "Tor SOCKS and control ports cannot be the same"
+                )
 
             # Check file permissions
             log_file = self.get("general.log_file")
             if log_file:
                 log_dir = os.path.dirname(log_file)
                 if not os.access(log_dir, os.W_OK):
-                    issues["warnings"].append(f"Log directory may not be writable: {log_dir}")
+                    issues["warnings"].append(
+                        f"Log directory may not be writable: {log_dir}"
+                    )
 
         except Exception as e:
             issues["errors"].append(f"Configuration validation failed: {e}")
@@ -253,7 +286,7 @@ class ConfigManagerEnhanced:
 
         if os.path.exists(self.profiles_dir):
             for file in os.listdir(self.profiles_dir):
-                if file.endswith('.json'):
+                if file.endswith(".json"):
                     profiles.append(file[:-5])  # Remove .json extension
 
         return profiles
