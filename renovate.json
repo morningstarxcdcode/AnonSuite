@@ -2,5 +2,40 @@
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
     "extends": [
         "config:recommended"
-    ]
+    ],
+    "schedule": ["before 6am on monday"],
+    "timezone": "UTC",
+    "labels": ["dependencies"],
+    "assigneesFromCodeOwners": true,
+    "reviewersFromCodeOwners": true,
+    "prHourlyLimit": 5,
+    "prConcurrentLimit": 10,
+    "packageRules": [
+        {
+            "matchManagers": ["github-actions"],
+            "automerge": true,
+            "automergeType": "pr",
+            "platformAutomerge": false
+        },
+        {
+            "matchDepTypes": ["devDependencies"],
+            "automerge": true,
+            "automergeType": "pr"
+        },
+        {
+            "matchPackagePatterns": ["^pytest", "^ruff", "^mypy", "^bandit"],
+            "groupName": "dev tools",
+            "automerge": true
+        },
+        {
+            "matchPackageNames": ["ubuntu"],
+            "allowedVersions": "!/^(16|18|20)\\./",
+            "enabled": true
+        }
+    ],
+    "vulnerabilityAlerts": {
+        "enabled": true
+    },
+    "stabilityDays": 3,
+    "minimumReleaseAge": "3 days"
 }
