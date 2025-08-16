@@ -14,24 +14,23 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v4
       with:
-
+        python-version: '3.13' # Or appropriate version from pyproject.toml
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements-dev.txt
+        pip install poetry  # Assuming poetry for dependency management based on pyproject.toml
+        poetry install --no-root
     - name: Lint with ruff
       run: |
-        ruff check src/ --exclude src/wifi/wifipumpkin3/
-        ruff format src/ --check --exclude src/wifi/wifipumpkin3/
+        poetry run ruff check .
+        poetry run ruff format . --check
     - name: Type check with mypy
       run: |
-        mypy src/ --ignore-missing-imports --exclude src/wifi/wifipumpkin3/ || echo "Type checking completed with warnings"
-      continue-on-error: true
+        poetry run mypy src/
     - name: Test with pytest
       run: |
-        pytest tests/ --maxfail=5 -x
-      continue-on-error: true
+        poetry run pytest
