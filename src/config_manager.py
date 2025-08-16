@@ -65,7 +65,10 @@ class ConfigManager:
                 },
                 "privoxy": {
                     "listen_port": 8119,
-
+                    "config_file": os.path.join(project_root, "config", "privoxy.conf"),
+                    "log_file": os.path.join(project_root, "log", "privoxy.log"),
+                    "upstream_proxy": "127.0.0.1:9000"
+                }
             },
             "wifi": {
                 "pixiewps": {
