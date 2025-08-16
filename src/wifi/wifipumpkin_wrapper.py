@@ -21,6 +21,11 @@ class WiFiPumpkinWrapper:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
+        # Set up paths
+        project_root = Path(__file__).parent.parent.parent
+        self.results_dir = project_root / "run" / "wifipumpkin"
+        self.config_dir = project_root / "config" / "wifipumpkin"
+        
         self.process = None
         self._ensure_directories()
 

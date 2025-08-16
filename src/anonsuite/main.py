@@ -27,11 +27,11 @@ from typing import Any, Dict, List, Optional
 # WiFi module imports - this got complicated due to optional dependencies
 # TODO: refactor this import mess when we have a proper dependency manager
 try:
-    from ..wifi.pixiewps_wrapper import PixiewpsWrapper
+    from wifi.pixiewps_wrapper import PixiewpsWrapper
 
     # WiFi scanner should be working now
-    from ..wifi.wifi_scanner import WiFiScanner
-    from ..wifi.wifipumpkin_wrapper import WiFiPumpkinWrapper
+    from wifi.wifi_scanner import WiFiScanner
+    from wifi.wifipumpkin_wrapper import WiFiPumpkinWrapper
     WIFI_AVAILABLE = True
 except ImportError as e:
     # Graceful degradation when WiFi modules aren't available
