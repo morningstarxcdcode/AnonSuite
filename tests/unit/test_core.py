@@ -150,13 +150,24 @@ class TestAnonSuiteCLI:
     
     @patch('anonsuite.ConfigManager')
     @patch('anonsuite.PluginManager')
-    @patch('builtins.input', return_value='invalid')
+    @patch('builtins.input', side_effect=['invalid', 'also_invalid', '2'])
     def test_get_user_choice_invalid(self, mock_input, mock_plugin_manager, mock_config_manager):
-        """Test invalid user input handling"""
+        """Test invalid user input handling - should eventually accept valid input"""
         cli = AnonSuiteCLI()
         
         choice = cli._get_user_choice()
-        assert choice == -1  # Should return -1 for invalid input
+        assert choice == 2  # Should eventually return the valid input after retries
+    
+    @patch('anonsuite.ConfigManager')
+    @patch('anonsuite.PluginManager')
+    @patch('builtins.input', side_effect=EOFError())
+    def test_get_user_choice_eof(self, mock_input, mock_plugin_manager, mock_config_manager):
+        """Test EOF handling in user input"""
+        cli = AnonSuiteCLI()
+        
+        choice = cli._get_user_choice()
+        assert choice == 0  # Should return 0 for EOF
+        assert not cli.running  # Should set running to False
 
 class TestProgressSpinner:
     """Test progress spinner functionality"""
