@@ -11,6 +11,7 @@ on:
 jobs:
   test:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20  # Add timeout to prevent long-running tests
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
@@ -82,7 +83,7 @@ jobs:
     
     - name: Test with pytest
       run: |
-        pytest tests/ -v --cov=src --cov-report=xml --cov-report=term
+        pytest tests/ -v --cov=src --cov-report=xml --cov-report=term --timeout=300 -x
       continue-on-error: true
     
     - name: Upload coverage to Codecov

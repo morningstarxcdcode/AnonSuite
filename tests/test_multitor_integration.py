@@ -5,15 +5,23 @@ import requests
 import os
 import socket
 
-# Define absolute path to multitor script
-MULTITOR_SCRIPT = os.path.expanduser("~/Desktop/AnonSuite/src/anonymity/multitor/multitor")
-MULTITOR_LOG = os.path.expanduser("~/Desktop/AnonSuite/src/anonymity/multitor/multitor.log")
+# Define dynamic path to multitor script
+import sys
+from pathlib import Path
+
+# Get project root directory
+PROJECT_ROOT = Path(__file__).parent.parent
+MULTITOR_SCRIPT = str(PROJECT_ROOT / "src" / "anonymity" / "multitor" / "multitor")
+MULTITOR_LOG = str(PROJECT_ROOT / "src" / "anonymity" / "multitor" / "multitor.log")
 
 # Test parameters
 TEST_USER = "morningstar" # Replace with your actual username
 SOCKS_PORT = 9000
 CONTROL_PORT = 9001
-PRIVOXY_PORT = 8119 # Assuming you changed Privoxy's port to 8119
+PRIVOXY_PORT = 8119
+
+# Check if we're running in CI
+IS_CI = os.getenv('CI') == 'true' or os.getenv('GITHUB_ACTIONS') == 'true' # Assuming you changed Privoxy's port to 8119
 
 @pytest.fixture(scope="module")
 def multitor_instance():
@@ -61,6 +69,7 @@ def check_port_listening(port, host='127.0.0.1'):
     finally:
         s.close()
 
+@pytest.mark.skipif(IS_CI, reason="Skipping network tests in CI environment")
 def test_tor_connectivity(multitor_instance):
     """
     Tests if Tor SOCKS proxy is working by routing a request through it.
@@ -81,6 +90,7 @@ def test_tor_connectivity(multitor_instance):
     except requests.exceptions.RequestException as e:
         pytest.fail(f"Failed to connect through Tor SOCKS proxy: {e}")
 
+@pytest.mark.skipif(IS_CI, reason="Skipping network tests in CI environment")
 def test_privoxy_connectivity(multitor_instance):
     """
     Tests if Privoxy HTTP proxy is working.

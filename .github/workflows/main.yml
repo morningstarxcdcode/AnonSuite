@@ -13,6 +13,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # Add timeout
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
@@ -35,5 +36,5 @@ jobs:
       continue-on-error: true
     - name: Test with pytest
       run: |
-        pytest tests/ -v
+        pytest tests/ -v --timeout=300 -x
       continue-on-error: true

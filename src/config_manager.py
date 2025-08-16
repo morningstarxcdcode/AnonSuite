@@ -52,7 +52,8 @@ class ConfigManager:
                 "log_level": "INFO",
                 "log_file": os.path.join(project_root, "log", "anonsuite.log"),
                 "data_dir": os.path.join(project_root, "run"),
-                "temp_dir": "/tmp/anonsuite"
+                "temp_dir": "/tmp/anonsuite",
+                "require_sudo": True
             },
             "anonymity": {
                 "tor": {
@@ -418,6 +419,49 @@ class ConfigManager:
         except Exception as e:
             self.logger.error(f"Failed to reset configuration: {e}")
             return False
+
+    # Compatibility properties for the AnonSuiteCLI interface
+    @property
+    def anonsuite_root(self) -> str:
+        """Get the AnonSuite project root directory"""
+        # Determine project root dynamically
+        current_file = os.path.abspath(__file__)
+        return os.path.dirname(os.path.dirname(current_file))
+    
+    @property 
+    def src_root(self) -> str:
+        """Get the source root directory"""
+        return os.path.join(self.anonsuite_root, "src")
+    
+    @property
+    def anonymity_module(self) -> str:
+        """Get the anonymity module directory"""
+        return os.path.join(self.src_root, "anonymity")
+    
+    @property
+    def wifi_module(self) -> str:
+        """Get the WiFi module directory"""
+        return os.path.join(self.src_root, "wifi")
+    
+    @property
+    def log_level(self) -> str:
+        """Get the log level"""
+        return self.get("general.log_level", "INFO")
+    
+    @property 
+    def log_file(self) -> Optional[str]:
+        """Get the log file path"""
+        return self.get("general.log_file")
+    
+    @property
+    def require_sudo(self) -> bool:
+        """Get whether sudo is required"""
+        return self.get("general.require_sudo", True)
+    
+    # Compatibility methods for the test interface
+    def save_user_config_to_file(self) -> bool:
+        """Alias for save_config for test compatibility"""
+        return self.save_config()
 
 # Test function
 def test_config_manager():

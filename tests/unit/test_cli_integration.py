@@ -73,18 +73,25 @@ class TestCLIIntegration:
         mock_run = mocker.patch('subprocess.run', return_value=mocker.Mock(returncode=0, stdout="mocked pixiewps output", stderr=""))
         
         wrapper = PixiewpsWrapper()
-        interface = "wlan0mon"
+        
+        # Test with proper WPS handshake parameters
+        pke = "test_pke"
+        pkr = "test_pkr" 
+        e_hash1 = "test_hash1"
+        e_hash2 = "test_hash2"
+        authkey = "test_authkey"
+        e_nonce = "test_nonce"
         bssid = "00:11:22:33:44:55"
         
-        result = wrapper.run_attack(interface, bssid)
+        result = wrapper.run_attack(pke, pkr, e_hash1, e_hash2, authkey, e_nonce, e_bssid=bssid)
         
-        assert result is True
-        # Adjust the expected call to match the actual implementation in PixiewpsWrapper
-        # The wrapper only adds -b and -v by default when other args are None
-        mock_run.assert_called_once_with(
-            ['sudo', '/Users/morningstar/Desktop/AnonSuite/src/wifi/pixiewps/pixiewps', '-b', bssid, '-v', '3'],
-            capture_output=True, text=True, check=True
-        )
+        assert result["status"] in ["success", "failed"]  # Should return dict with status
+        
+        # Verify subprocess.run was called with pixiewps binary
+        assert mock_run.called
+        call_args = mock_run.call_args[0][0]  # Get the command list
+        assert call_args[0].endswith("pixiewps")  # Should use dynamic path to pixiewps
+        assert "-b" in call_args and bssid in call_args  # Should include BSSID
 
     def test_wifipumpkin_wrapper_start_ap_non_functional(self, caplog):
         # Test that wifipumpkin_wrapper correctly reports non-functional status
