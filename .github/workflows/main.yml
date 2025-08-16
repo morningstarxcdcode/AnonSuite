@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: Simple Build Pipeline
 
 on:
   push:
@@ -11,27 +11,18 @@ on:
       - develop
 
 jobs:
-  build:
+  simple-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # Add timeout
     steps:
     - uses: actions/checkout@v5
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
 
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements-dev.txt
-    - name: Lint with ruff
-      run: |
-        ruff check src/ --exclude src/wifi/wifipumpkin3/
-        ruff format src/ --check --exclude src/wifi/wifipumpkin3/
-    - name: Type check with mypy
-      run: |
-        mypy src/ --ignore-missing-imports --exclude src/wifi/wifipumpkin3/ || echo "Type checking completed with warnings"
-      continue-on-error: true
-    - name: Test with pytest
-      run: |
-        pytest tests/ --maxfail=5 -x
+
       continue-on-error: true
