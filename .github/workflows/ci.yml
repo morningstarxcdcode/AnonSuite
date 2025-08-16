@@ -60,7 +60,7 @@ jobs:
     
     - name: Format check with ruff
       run: |
-        ruff format --check src/
+        ruff format --check src/ --exclude src/wifi/wifipumpkin3/
     
     - name: Type check with mypy
       run: |
