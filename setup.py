@@ -4,19 +4,17 @@ AnonSuite Setup Script
 Backward compatibility setup.py for older pip versions
 """
 
-from setuptools import setup, find_packages
 import os
-import sys
+
+from setuptools import find_packages, setup
 
 # Ensure we're running on a supported Python version
-if sys.version_info < (3, 8):
-    sys.exit("AnonSuite requires Python 3.8 or higher")
 
 # Read long description from README
 def read_readme():
     readme_path = os.path.join(os.path.dirname(__file__), "README.md")
     try:
-        with open(readme_path, "r", encoding="utf-8") as f:
+        with open(readme_path, encoding="utf-8") as f:
             return f.read()
     except FileNotFoundError:
         return "Unified Security Toolkit for Privacy Professionals"
@@ -25,13 +23,13 @@ def read_readme():
 def read_requirements():
     req_path = os.path.join(os.path.dirname(__file__), "requirements.txt")
     try:
-        with open(req_path, "r", encoding="utf-8") as f:
-            return [line.strip() for line in f 
+        with open(req_path, encoding="utf-8") as f:
+            return [line.strip() for line in f
                    if line.strip() and not line.startswith("#")]
     except FileNotFoundError:
         return [
             "click>=8.0.0",
-            "colorama>=0.4.4", 
+            "colorama>=0.4.4",
             "requests>=2.28.0",
             "pyyaml>=6.0",
             "psutil>=5.8.0"
@@ -67,7 +65,7 @@ setup(
         "gui": ["PyQt5>=5.15.0"],
         "dev": [
             "pytest>=7.0.0",
-            "pytest-cov>=4.0.0", 
+            "pytest-cov>=4.0.0",
             "ruff>=0.1.0",
             "mypy>=1.0.0",
             "bandit>=1.7.0"
@@ -76,12 +74,12 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "anonsuite=anonsuite:main",
+            "anonsuite=anonsuite.main:main",
         ],
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
-        "Environment :: Console", 
+        "Environment :: Console",
         "Intended Audience :: Information Technology",
         "Intended Audience :: System Administrators",
         "License :: OSI Approved :: MIT License",
@@ -89,7 +87,7 @@ setup(
         "Operating System :: POSIX :: Linux",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9", 
+        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",

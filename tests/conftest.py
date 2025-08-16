@@ -3,13 +3,14 @@
 Test configuration and fixtures for AnonSuite
 """
 
-import pytest
 import os
+import shutil
 import sys
 import tempfile
-import shutil
 from pathlib import Path
 from unittest.mock import Mock, patch
+
+import pytest
 
 # Add src directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -66,7 +67,7 @@ def sample_wifi_networks():
             "frequency": "2.437 GHz"
         },
         {
-            "ssid": "TestNetwork2", 
+            "ssid": "TestNetwork2",
             "bssid": "AA:BB:CC:DD:EE:FF",
             "channel": 11,
             "signal_level": -67,
@@ -167,11 +168,11 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(pytest.mark.integration)
         elif "security" in str(item.fspath):
             item.add_marker(pytest.mark.security)
-        
+
         # Add slow marker for tests that might be slow
         if "scan" in item.name or "attack" in item.name:
             item.add_marker(pytest.mark.slow)
-        
+
         # Add network marker for tests requiring network
         if "network" in item.name or "connectivity" in item.name:
             item.add_marker(pytest.mark.network)
@@ -179,29 +180,29 @@ def pytest_collection_modifyitems(config, items):
 # Helper functions for tests
 def create_mock_tor_config(config_dir: str) -> str:
     """Create mock Tor configuration file"""
-    torrc_content = """
+    torrc_content = f"""
 SocksPort 9000
 ControlPort 9001
-DataDirectory {}/tor_data
-Log notice file {}/tor.log
-""".format(config_dir, config_dir)
-    
+DataDirectory {config_dir}/tor_data
+Log notice file {config_dir}/tor.log
+"""
+
     torrc_path = os.path.join(config_dir, "torrc")
     with open(torrc_path, 'w') as f:
         f.write(torrc_content)
-    
+
     return torrc_path
 
 def create_mock_privoxy_config(config_dir: str) -> str:
     """Create mock Privoxy configuration file"""
-    privoxy_content = """
+    privoxy_content = f"""
 listen-address 127.0.0.1:8119
 forward-socks5 / 127.0.0.1:9000 .
-logfile {}/privoxy.log
-""".format(config_dir)
-    
+logfile {config_dir}/privoxy.log
+"""
+
     privoxy_path = os.path.join(config_dir, "privoxy.conf")
     with open(privoxy_path, 'w') as f:
         f.write(privoxy_content)
-    
+
     return privoxy_path

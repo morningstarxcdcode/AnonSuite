@@ -1,0 +1,35 @@
+# CI-specific requirements
+# Core dependencies needed for testing and CI
+
+# CLI and argument parsing
+click>=8.0.0
+colorama>=0.4.4
+
+# Network and security libraries (non-optional subset)
+requests>=2.28.0
+urllib3>=1.26.0
+cryptography>=3.4.8
+
+# Configuration and data handling
+pyyaml>=6.0
+toml>=0.10.2
+
+# System utilities
+psutil>=5.8.0
+
+# Testing and development tools
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-mock>=3.8.0
+
+# Code quality tools
+ruff>=0.1.0
+mypy>=1.0.0
+bandit>=1.7.0
+
+# Build tools
+build>=0.10.0
+wheel>=0.40.0
+
+# Note: Optional dependencies like scapy are excluded from CI
+# They require system-level networking capabilities not available in CI

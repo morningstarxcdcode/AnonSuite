@@ -4,10 +4,10 @@ Sample AnonSuite Plugin
 Demonstrates the plugin system functionality
 """
 
-import subprocess
-import platform
-import sys
 import os
+import platform
+import subprocess
+import sys
 
 # Add the src directory to path to import the base class
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src'))
@@ -26,23 +26,23 @@ except ImportError:
 
 class NetworkInfoPlugin(AnonSuitePlugin):
     """Sample plugin for displaying network information"""
-    
+
     def __init__(self, cli_instance):
         super().__init__(cli_instance)
         self.name = "Network Info Plugin"
         self.version = "1.0.0"
         self.description = "Display basic network information"
-    
+
     def run(self, *args, **kwargs):
         """Execute the plugin functionality"""
         print(f"\n🔌 Executing {self.name} v{self.version}...")
         print("=" * 60)
-        
+
         # Get system info
         print(f"🖥️  System: {platform.system()} {platform.release()}")
         print(f"🏗️  Architecture: {platform.machine()}")
         print(f"🐍 Python: {platform.python_version()}")
-        
+
         # Get network interfaces (basic)
         try:
             if platform.system() == "Darwin":  # macOS
@@ -62,10 +62,10 @@ class NetworkInfoPlugin(AnonSuitePlugin):
                 print("🌐 Network Interfaces: Not implemented for this OS")
         except Exception as e:
             print(f"🌐 Network Interfaces: Error - {str(e)}")
-        
+
         # Check internet connectivity
         try:
-            result = subprocess.run(["ping", "-c", "1", "8.8.8.8"], 
+            result = subprocess.run(["ping", "-c", "1", "8.8.8.8"],
                                   capture_output=True, text=True, timeout=5)
             if result.returncode == 0:
                 print("🌍 Internet: Connected")
@@ -73,10 +73,10 @@ class NetworkInfoPlugin(AnonSuitePlugin):
                 print("🌍 Internet: Not connected")
         except Exception:
             print("🌍 Internet: Unable to test")
-        
+
         print("=" * 60)
         print("✅ Plugin execution completed!")
         print("\nPress Enter to continue...")
         input()
-        
+
         return {"status": "success", "message": "Network info plugin executed"}
