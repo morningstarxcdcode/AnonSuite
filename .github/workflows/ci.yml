@@ -113,19 +113,20 @@ jobs:
       continue-on-error: true
 
     - name: Test CLI functionality
+      shell: bash
       run: |
-        cd ${{ github.workspace }}
+        cd "${{ github.workspace }}"
         python -m anonsuite --version || echo "CLI --version not available (non-blocking)"
         python -m anonsuite --help || echo "CLI --help not available (non-blocking)"
-        python - << 'PY'
-import sys
-try:
-    import anonsuite  # noqa: F401
-    print('✓ Package health check passed')
-except Exception as e:
-    print(f'⚠ Package health check warning: {e}')
-    sys.exit(0)
-PY
+        python - <<'PY'
+        import sys
+        try:
+            import anonsuite  # noqa: F401
+            print('OK: Package health check passed')
+        except Exception as e:
+            print(f'Warning: Package health check: {e}')
+            sys.exit(0)
+        PY
 
     - name: Upload test artifacts
       if: always()
