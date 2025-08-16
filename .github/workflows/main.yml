@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: Simple Build Pipeline
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
       - develop
 
 jobs:
-  build:
+  simple-build:
     runs-on: ubuntu-latest
     timeout-minutes: 15  # Add timeout
     steps:
@@ -19,6 +19,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
+        python-version: '3.11'
 
     - name: Install dependencies
       run: |
