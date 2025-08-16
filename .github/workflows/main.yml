@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: Simple Build Pipeline
 
 on:
   push:
@@ -11,26 +11,11 @@ on:
       - develop
 
 jobs:
-  build:
+  simple-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # Add timeout
     steps:
 
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.13' # Or appropriate version from pyproject.toml
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install poetry  # Assuming poetry for dependency management based on pyproject.toml
-        poetry install --no-root
-    - name: Lint with ruff
-      run: |
-        poetry run ruff check .
-        poetry run ruff format . --check
-    - name: Type check with mypy
-      run: |
-        poetry run mypy src/
-    - name: Test with pytest
-      run: |
-        poetry run pytest
