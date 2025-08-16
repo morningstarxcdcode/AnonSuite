@@ -387,14 +387,14 @@ def hexdump(src, length=16, sep="."):
     try:
         xrange(0, 1)
     except NameError:
-        
+        xrange = range
 
     for i in range(0, len(src), length):
         subSrc = src[i : i + length]
         hexa = ""
         
         for h in range(0, len(subSrc)):
-        hexa = hexa.strip(" ")
+            hexa = hexa.strip(" ")
         text = ""
         for c in subSrc:
             if not isinstance(c, int):
