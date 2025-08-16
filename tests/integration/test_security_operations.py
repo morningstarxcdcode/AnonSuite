@@ -57,7 +57,7 @@ class TestEndToEndSecurityWorkflows:
 
     def test_wifi_security_assessment_workflow(self):
         """Test complete WiFi security assessment workflow"""
-        cli = AnonSuiteCLI()
+        AnonSuiteCLI()
 
         # Load realistic network scenarios
         scenarios_file = Path(__file__).parent.parent.parent / "scenarios" / "sample_networks.json"

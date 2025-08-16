@@ -5,13 +5,10 @@ Backward compatibility setup.py for older pip versions
 """
 
 import os
-import sys
 
 from setuptools import find_packages, setup
 
 # Ensure we're running on a supported Python version
-if sys.version_info < (3, 8):
-    sys.exit("AnonSuite requires Python 3.8 or higher")
 
 # Read long description from README
 def read_readme():

@@ -54,7 +54,7 @@ def test_multitor_startup():
     print(f"\nStarting multitor: {' '.join(command)}")
 
     # Run multitor
-    result = subprocess.run(command, capture_output=True, text=True)
+    subprocess.run(command, capture_output=True, text=True)
 
     # Give services time to start
     time.sleep(5)

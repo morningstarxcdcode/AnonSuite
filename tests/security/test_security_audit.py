@@ -39,7 +39,7 @@ class TestInputValidation:
         for malicious_input in malicious_inputs:
             # Should not execute or cause errors
             try:
-                result = config.set('test.malicious', malicious_input)
+                config.set('test.malicious', malicious_input)
                 # Input should be stored safely without execution
                 stored_value = config.get('test.malicious')
                 assert stored_value == malicious_input  # Stored as-is, not executed
@@ -91,7 +91,7 @@ class TestInputValidation:
 
             # Should detect insecure permissions
             file_stat = os.stat(test_file)
-            permissions = stat.filemode(file_stat.st_mode)
+            stat.filemode(file_stat.st_mode)
 
             # Check if world-readable
             world_readable = bool(file_stat.st_mode & stat.S_IROTH)
@@ -199,7 +199,7 @@ class TestDataProtection:
             assert stored == sensitive  # Should be stored correctly
 
             # But should not appear in string representation of config object
-            config_str = str(config.__dict__)
+            str(config.__dict__)
             # This is a basic check - real implementation might hash or encrypt
 
     def test_temporary_file_cleanup(self):
@@ -209,7 +209,7 @@ class TestDataProtection:
 
         # Create temporary files
         temp_files = []
-        for i in range(3):
+        for _i in range(3):
             with tempfile.NamedTemporaryFile(delete=False, prefix='anonsuite_test_') as f:
                 temp_files.append(f.name)
 
@@ -228,11 +228,10 @@ class TestDataProtection:
         sensitive_data = "very_secret_password_123"
 
         # Simulate processing sensitive data
-        processed_data = sensitive_data.upper()
+        sensitive_data.upper()
 
         # Clear variables
         sensitive_data = None
-        processed_data = None
 
         # Force garbage collection
         import gc

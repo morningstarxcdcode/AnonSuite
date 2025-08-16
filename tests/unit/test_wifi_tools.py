@@ -386,14 +386,14 @@ class TestWiFiPumpkinWrapper:
         mock_result = Mock()
         mock_result.returncode = 0
         mock_result.stdout = """
-wlan0     IEEE 802.11  ESSID:off/any  
-          Mode:Managed  Access Point: Not-Associated   Tx-Power=20 dBm   
+wlan0     IEEE 802.11  ESSID:off/any
+          Mode:Managed  Access Point: Not-Associated   Tx-Power=20 dBm
           Retry short limit:7   RTS thr:off   Fragment thr:off
           Encryption key:off
           Power Management:on
-          
-wlan1     IEEE 802.11  ESSID:"TestNetwork"  
-          Mode:Managed  Frequency:2.437 GHz  Access Point: 00:11:22:33:44:55   
+
+wlan1     IEEE 802.11  ESSID:"TestNetwork"
+          Mode:Managed  Frequency:2.437 GHz  Access Point: 00:11:22:33:44:55
         """
         mock_run.return_value = mock_result
 
@@ -436,11 +436,11 @@ class TestWiFiScanner:
         mock_result = Mock()
         mock_result.returncode = 0
         mock_result.stdout = """
-wlan0     IEEE 802.11  ESSID:off/any  
-          Mode:Managed  Access Point: Not-Associated   Tx-Power=20 dBm   
-          
-wlan1     IEEE 802.11  ESSID:"TestNetwork"  
-          Mode:Managed  Frequency:2.437 GHz  Access Point: 00:11:22:33:44:55   
+wlan0     IEEE 802.11  ESSID:off/any
+          Mode:Managed  Access Point: Not-Associated   Tx-Power=20 dBm
+
+wlan1     IEEE 802.11  ESSID:"TestNetwork"
+          Mode:Managed  Frequency:2.437 GHz  Access Point: 00:11:22:33:44:55
         """
         mock_run.return_value = mock_result
 
@@ -461,15 +461,15 @@ wlan0     Scan completed :
           Cell 01 - Address: 00:11:22:33:44:55
                     Channel:6
                     Frequency:2.437 GHz (Channel 6)
-                    Quality=70/70  Signal level=-30 dBm  
+                    Quality=70/70  Signal level=-30 dBm
                     ESSID:"TestNetwork1"
                     Encryption key:on
                     IE: IEEE 802.11i/WPA2 Version 1
-                    
+
           Cell 02 - Address: AA:BB:CC:DD:EE:FF
                     Channel:11
                     Frequency:2.462 GHz (Channel 11)
-                    Quality=40/70  Signal level=-67 dBm  
+                    Quality=40/70  Signal level=-67 dBm
                     ESSID:"TestNetwork2"
                     Encryption key:off
         """

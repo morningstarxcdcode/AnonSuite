@@ -153,7 +153,7 @@ class TestTorIntegrationSecurity:
             mock_run.return_value.returncode = 0
             mock_run.return_value.stdout = "Circuit built successfully"
 
-            cli = AnonSuiteCLI()
+            AnonSuiteCLI()
 
             # Test multiple Tor instances for isolation
             tor_configs = [
@@ -232,7 +232,7 @@ class TestWiFiSecurityOperations:
             ("1111111", 4),  # All ones
         ]
 
-        for pin, expected_check in test_pins:
+        for pin, _expected_check in test_pins:
             calculated = calculate_wps_checksum(pin)
             # Verify checksum calculation works
             assert isinstance(calculated, int)

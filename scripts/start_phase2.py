@@ -70,15 +70,15 @@ from pathlib import Path
 
 class PixiewpsWrapper:
     """Wrapper for pixiewps WPS PIN recovery tool"""
-    
+
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-    
+
     def run_attack(self, interface, bssid):
         """Run pixiewps attack on target BSSID"""
         # TODO: Implement pixiewps attack logic
         pass
-    
+
     def validate_target(self, bssid):
         """Validate target BSSID format"""
         # TODO: Implement BSSID validation
@@ -97,15 +97,15 @@ from pathlib import Path
 
 class WiFiPumpkinWrapper:
     """Wrapper for WiFiPumpkin3 rogue AP framework"""
-    
+
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-    
+
     def create_rogue_ap(self, ssid, interface):
         """Create rogue access point"""
         # TODO: Implement rogue AP creation
         pass
-    
+
     def start_evil_twin(self, target_ssid, interface):
         """Start evil twin attack"""
         # TODO: Implement evil twin attack
@@ -125,15 +125,15 @@ from pathlib import Path
 
 class WiFiScanner:
     """WiFi network reconnaissance and analysis"""
-    
+
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-    
+
     def scan_networks(self, interface):
         """Scan for available WiFi networks"""
         # TODO: Implement network scanning
         pass
-    
+
     def analyze_security(self, network_info):
         """Analyze network security configuration"""
         # TODO: Implement security analysis
@@ -158,12 +158,12 @@ from wifi.wifi_scanner import WiFiScanner
 
 class TestPixiewpsWrapper:
     """Test pixiewps wrapper functionality"""
-    
+
     def test_initialization(self):
         """Test pixiewps wrapper initialization"""
         wrapper = PixiewpsWrapper()
         assert wrapper is not None
-    
+
     def test_bssid_validation(self):
         """Test BSSID format validation"""
         # TODO: Implement BSSID validation tests
@@ -171,7 +171,7 @@ class TestPixiewpsWrapper:
 
 class TestWiFiPumpkinWrapper:
     """Test WiFiPumpkin3 wrapper functionality"""
-    
+
     def test_initialization(self):
         """Test WiFiPumpkin3 wrapper initialization"""
         wrapper = WiFiPumpkinWrapper()
@@ -179,7 +179,7 @@ class TestWiFiPumpkinWrapper:
 
 class TestWiFiScanner:
     """Test WiFi scanner functionality"""
-    
+
     def test_initialization(self):
         """Test WiFi scanner initialization"""
         scanner = WiFiScanner()
@@ -194,7 +194,7 @@ class TestWiFiScanner:
 tor_socks_port = 9000
 tor_control_port = 9001
 circuit_timeout = 600
-exit_nodes = 
+exit_nodes =
 
 [wifi]
 # WiFi auditing configuration

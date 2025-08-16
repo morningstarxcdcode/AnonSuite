@@ -69,7 +69,6 @@ class TestInputValidation:
             except (OSError, ValueError):
                 return False
 
-        allowed_dir = "/tmp/anonsuite"
 
         # Safe paths
         safe_paths = [
@@ -78,7 +77,7 @@ class TestInputValidation:
             "/tmp/anonsuite/captures/test.pcap"
         ]
 
-        for safe_path in safe_paths:
+        for _safe_path in safe_paths:
             # Note: This test assumes the paths exist or we handle the resolution properly
             # In a real implementation, we'd need to handle non-existent paths
             pass
@@ -570,7 +569,7 @@ class TestAuditLogging:
         }
 
         # Write entry with hash
-        original_hash = write_audit_entry_with_hash(entry, log_file)
+        write_audit_entry_with_hash(entry, log_file)
 
         # Read and verify entry
         with open(log_file) as f:

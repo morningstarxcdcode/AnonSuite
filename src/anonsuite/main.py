@@ -581,7 +581,7 @@ class AnonSuiteCLI:
 
         try:
             # Use a higher timeout for commands that might take longer, e.g., network operations
-            result = subprocess.run(command, check=True, capture_output=True, text=True, timeout=120) # Increased timeout to 120s
+            subprocess.run(command, check=True, capture_output=True, text=True, timeout=120) # Increased timeout to 120s
 
             if progress_indicator:
                 progress_indicator.stop()
@@ -1756,11 +1756,6 @@ A comprehensive security toolkit for anonymity and WiFi auditing
             import sys
 
             # Check Python version
-            if sys.version_info < (3, 8):
-                return {
-                    'status': 'fail',
-                    'message': f'Python {sys.version_info.major}.{sys.version_info.minor} is too old. Requires 3.8+'
-                }
 
             # Check virtual environment
             in_venv = hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix)
@@ -2607,11 +2602,6 @@ def _add_cli_helper_methods():
             import sys
 
             # Check Python version
-            if sys.version_info < (3, 8):
-                return {
-                    'status': 'fail',
-                    'message': f'Python {sys.version_info.major}.{sys.version_info.minor} is too old. Requires 3.8+'
-                }
 
             # Check virtual environment
             in_venv = hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix)

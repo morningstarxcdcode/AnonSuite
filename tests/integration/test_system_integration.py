@@ -122,7 +122,7 @@ class TestWiFiIntegration:
         mock_run.return_value.stdout = "iwconfig version info"
 
         # Test iwconfig
-        result = subprocess.run(["which", "iwconfig"], capture_output=True, text=True)
+        subprocess.run(["which", "iwconfig"], capture_output=True, text=True)
         # We don't assert here since tools might not be installed in test environment
         # This is more of a documentation of requirements
 
@@ -309,7 +309,7 @@ class TestSecurityIntegration:
 
         # Check file permissions
         file_stat = os.stat(tmp_file_path)
-        file_mode = stat.filemode(file_stat.st_mode)
+        stat.filemode(file_stat.st_mode)
 
         # Should not be world-readable
         assert not (file_stat.st_mode & stat.S_IROTH)

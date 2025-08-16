@@ -26,13 +26,13 @@ class TestCLIIntegration:
 
     def test_pixiewps_wrapper_run_attack(self, mocker):
         # Test the pixiewps_wrapper's run_attack method
-        mock_run = mocker.patch('subprocess.run', return_value=mocker.Mock(returncode=0, stdout="mocked pixiewps output", stderr=""))
+        mocker.patch('subprocess.run', return_value=mocker.Mock(returncode=0, stdout="mocked pixiewps output", stderr=""))
 
         wrapper = PixiewpsWrapper()
         interface = "wlan0mon"
         bssid = "00:11:22:33:44:55"
 
-        result = wrapper.run_attack(interface, bssid)
+        wrapper.run_attack(interface, bssid)
 
         import pytest
 import os

@@ -44,10 +44,10 @@ class PixiewpsWrapper:
                    output_file: Optional[str] = None) -> Dict:
         """
         Run pixiewps attack with provided WPS handshake data
-        
+
         Args:
             pke: Enrollee public key
-            pkr: Registrar public key  
+            pkr: Registrar public key
             e_hash1: Enrollee hash-1
             e_hash2: Enrollee hash-2
             authkey: Authentication session key
@@ -56,7 +56,7 @@ class PixiewpsWrapper:
             e_bssid: Enrollee BSSID (optional)
             verbosity: Verbosity level 1-3
             output_file: Output file path (optional)
-        
+
         Returns:
             Dict with attack results
         """

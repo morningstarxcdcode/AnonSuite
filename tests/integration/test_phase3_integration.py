@@ -127,14 +127,6 @@ class TestPhase3CoreIntegration:
 
         # Verify enhanced menu options are available
         # This tests that the menu structure includes new options
-        menu_options = [
-            "Start AnonSuite (Tor + Proxy)",
-            "Stop AnonSuite",
-            "Restart AnonSuite",
-            "Check Status",
-            "Monitor Performance",
-            "View Tor Logs"
-        ]
 
         # Test that menu rendering doesn't crash
         with patch('builtins.input', return_value='0'):  # Simulate user choosing "Back"
@@ -183,7 +175,7 @@ class TestPhase3ServiceIntegration:
         }
 
         # Test that ports are consistently referenced
-        for port_name, port_number in expected_ports.items():
+        for _port_name, port_number in expected_ports.items():
             assert isinstance(port_number, int)
             assert 1024 <= port_number <= 65535  # Valid port range
 
