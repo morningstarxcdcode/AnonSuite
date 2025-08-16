@@ -74,7 +74,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "anonsuite=anonsuite:main",
+            "anonsuite=anonsuite.main:main",
         ],
     },
     classifiers=[
