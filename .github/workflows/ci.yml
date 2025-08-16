@@ -112,7 +112,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: 3.12  # Changed from 3.13 to 3.12 as 3.13 might not be available
+        python-version: 3.13  # Changed from 3.13 to 3.12 as 3.13 might not be available
     
     - name: Install dependencies
       run: |
@@ -156,7 +156,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: 3.12  # Changed from 3.13 to 3.12 as 3.13 might not be available
+        python-version: 3.13  # Changed from 3.13 to 3.12 as 3.13 might not be available
     
     - name: Install build dependencies
       run: |
