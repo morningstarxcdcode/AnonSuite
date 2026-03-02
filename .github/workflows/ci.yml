@@ -112,7 +112,7 @@ EOF
       
     - name: Create artifact with fixed code
       if: steps.git-check.outputs.changes == 'true' && github.event_name == 'pull_request'
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: fixed-code
         path: src/
@@ -295,7 +295,7 @@ except Exception as e:
     
     - name: Upload test artifacts
       if: always()
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: test-artifacts-${{ matrix.os }}-${{ matrix.python-version }}
         path: |
@@ -350,7 +350,7 @@ except Exception as e:
         fi
     
     - name: Upload security scan results
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: security-scan-results
         path: |
@@ -411,7 +411,7 @@ EOF
         twine check dist/*
     
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: dist-packages
         path: dist/
